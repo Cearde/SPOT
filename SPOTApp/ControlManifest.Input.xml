@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest>
+  <control namespace="SPOTApp" constructor="SPOTApp" version="0.3.3" display-name-key="SPOTApp" description-key="SPOTApp description" control-type="standard" >
+    <external-service-usage enabled="false">
+    </external-service-usage>
+    <resources>
+      <code path="index.ts" order="1"/>
+      <css path="styles.css" order="1"/>
+    </resources>
+    <property name="tableData" display-name-key="Table Data" description-key="Input data for the dynamic table" of-type="Multiple" usage="input" required="true" />
+    <property name="gridTitle" display-name-key="Grid Title" description-key="Title for the table grid" of-type="SingleLine.Text" usage="input" required="false" default-value="Dynamic Table" />
+    <property name="correoValidacion" display-name-key="Envia a evaluación tecnica" description-key="boton para enviar a evaluacion tecnica" of-type="SingleLine.Email" usage="output" required="false" />
+    <property name="datosDescarte" display-name-key="Motivo del descarte" description-key="Dato capturado en el prompt de descarte" of-type="Multiple" usage="output" required="false" />
+    <property name="usuariosEmpresa" display-name-key="Usuarios O365" of-type="Multiple" usage="input" required="true" />
+  </control>
+</manifest>

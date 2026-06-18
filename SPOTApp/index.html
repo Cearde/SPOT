@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SPOT - Matriz comparativa</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">CODELCO</div>
+      <div class="controls">
+        <label>Licitación</label>
+        <select id="tenderSelect"><option>Doc2081499759 — Suministro materiales min</option></select>
+      </div>
+      <div class="user">[ usuario ]</div>
+    </header>
+
+    <main>
+      <section class="tender-card">
+        <div class="tender-info">
+          <h1>Doc2081499759</h1>
+          <p class="subtitle">Apertura: 12/05/2025 · Suministro de materiales y consumibles operacionales — CODELCO División Norte</p>
+        </div>
+
+        <div class="tender-stats">
+          <div class="stat">
+            <div class="num">30</div>
+            <div class="label">Total proveedores</div>
+          </div>
+          <div class="stat highlight">
+            <div class="num">26</div>
+            <div class="label">Proveedores calificados</div>
+          </div>
+          <div class="stat danger">
+            <div class="num">4</div>
+            <div class="label">Proveedores descartados</div>
+          </div>
+          <div class="stat">
+            <div class="num">8</div>
+            <div class="label">Materiales totales</div>
+          </div>
+          <div class="stat warning">
+            <div class="num">4</div>
+            <div class="label">Materiales sin oferta</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <select id="awardCriteria"><option>Menor precio unitario</option></select>
+          <div class="buttons">
+            <button class="btn">Descargar informe</button>
+            <button class="btn primary">Cerrar licitación</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="filters">
+        <h3>Filtrar proveedores <small id="visibleCount">5 / 30 visibles</small></h3>
+        <div id="pills" class="pills"></div>
+      </section>
+
+      <section class="legend">
+        <strong>LEYENDA:</strong>
+        <span class="legend-chip best">Mejor precio (1°)</span>
+        <span class="legend-chip second">2° mejor precio</span>
+        <span class="legend-chip has-offer">Con oferta (3°+)</span>
+        <span class="legend-chip no-offer">Sin oferta</span>
+        <span class="legend-chip discarded">Descartado</span>
+      </section>
+
+      <section class="matrix">
+        <div class="matrix-header">
+          <div class="material-col">Material</div>
+          <div class="suppliers-row" id="supplierHeaders"></div>
+        </div>
+        <div class="matrix-body" id="matrixBody"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

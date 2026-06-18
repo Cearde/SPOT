@@ -1,0 +1,92 @@
+[
+    {
+        "requisitionId": "0084189040",
+        "materialName": "AGUJA 2,0X150MM SYNTHES 29220",
+        "materialNumber": "00000012808",
+        "quantityAmount": 1,
+        "quantityUnitCode": "EA        ",
+        "lastPurchasePrice": 17.40,
+        "lastPurchaseDate": "01\/02\/2026",
+        "suppliers": [
+            {
+                "rutSupplier": "19707560-0",
+                "supplierName": "RFQ 1",
+                "brandModel": "CHINO",
+                "deliveryDays": 5,
+                "PER": "#",
+                "PEP": "#",
+                "AR": "X",
+                "avgDeliveryDays": 3,
+                "price": 0.51,
+                "esMasBarato": 1,
+                "incoterm": "EBC",
+                "incotermPerc": 11.00,
+                "id": 169,
+                "hasADD": 0,
+                "hasOTIF": 1
+            },
+            {
+                "rutSupplier": "25574060-1",
+                "supplierName": "RFQ 2",
+                "brandModel": "Johnson",
+                "deliveryDays": 10,
+                "PER": "#",
+                "PEP": "#",
+                "AR": "#",
+                "avgDeliveryDays": 15,
+                "price": 0.76,
+                "esMasBarato": 2,
+                "incoterm": "EBC",
+                "incotermPerc": 11.00,
+                "id": 170,
+                "hasADD": 0,
+                "hasOTIF": 0
+            }
+        ]
+    },
+    {
+        "requisitionId": "0084189040",
+        "materialName": "MASCARILLA QUIRURG C\/ELASTICO DESECHABLE",
+        "materialNumber": "00000012805",
+        "quantityAmount": 1,
+        "quantityUnitCode": "EA        ",
+        "lastPurchasePrice": 0.02,
+        "lastPurchaseDate": "01\/03\/2026",
+        "suppliers": [
+            {
+                "rutSupplier": "19707560-0",
+                "supplierName": "RFQ 1",
+                "brandModel": "GHUANZOU",
+                "deliveryDays": 1,
+                "PER": "#",
+                "PEP": "#",
+                "AR": "X",
+                "avgDeliveryDays": 3,
+                "price": 0.02,
+                "esMasBarato": 1,
+                "incoterm": "EBC",
+                "incotermPerc": 11.00,
+                "id": 171,
+                "hasADD": 1,
+                "hasOTIF": 1
+            },
+            {
+                "rutSupplier": "25574060-1",
+                "supplierName": "RFQ 2",
+                "brandModel": "MUNNICH",
+                "deliveryDays": 20,
+                "PER": "#",
+                "PEP": "#",
+                "AR": "#",
+                "avgDeliveryDays": 15,
+                "price": 0.02,
+                "esMasBarato": 1,
+                "incoterm": "EBC",
+                "incotermPerc": 11.00,
+                "id": 172,
+                "hasADD": 1,
+                "hasOTIF": 0
+            }
+        ]
+    }
+]

@@ -1,0 +1,318 @@
+:root {
+    --bg: #f5f3f1;
+    --card: #fff;
+    --muted: #777;
+    --primary: #e85a0d;
+    --accent: #0ea5a4;
+    --danger: #f8d7da;
+    --success: #d4edda;
+    --teal: #0b7a78;
+    --border: #e7e3df;
+}
+
+/* --- App Container --- */
+.spot-app {
+    width: 100%;
+    height: 100%; /* Obliga al componente a usar el alto que le des en Power Apps */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Evita que la pantalla completa se rompa */
+    box-sizing: border-box;
+}
+
+.spot-empty { 
+    padding: 20px; 
+    text-align: center; 
+    color: var(--muted); 
+    background: var(--card); 
+    border: 1px solid var(--border); 
+    border-radius: 12px; 
+}
+
+/* --- Topbar --- */
+.spot-topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border-radius: 10px; background: #ffffff; border: 1px solid var(--border); }
+.spot-brand { padding: 10px 16px; background: var(--primary); color: white; border-radius: 8px; font-weight: 700; }
+.spot-topbar .spot-controls { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 240px; }
+.spot-topbar label { font-size: 13px; color: #5a5a5a; }
+.spot-topbar select { min-width: 240px; padding: 8px 10px; border-radius: 8px; border: 1px solid #d8d2cc; background: #f8f6f3; }
+.spot-user { color: #666666; }
+
+/* --- Sections --- */
+.spot-card, .spot-filters, .spot-legend, .spot-matrix { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+
+/* --- Header Card & Stats --- */
+.spot-card { display: flex; flex-direction: column; gap: 18px; }
+.spot-card-title { margin: 0; font-size: 24px; font-weight: 700; }
+.spot-card-subtitle { margin: 0; color: #666; font-size: 14px; line-height: 1.5; }
+.spot-stats { display: flex; flex-wrap: wrap; gap: 12px; }
+.spot-stat { flex: 1 1 160px; min-width: 140px; padding: 16px; border-radius: 12px; background: #fbf8f6; border: 1px solid #ebe5e0; }
+.spot-stat.highlight { background: #e6f7f8; border-color: #c9eef0; }
+.spot-stat.danger { background: #fff2f2; border-color: #f3d0d2; }
+.spot-stat.warning { background: #fff7e5; border-color: #fae2b8; }
+.spot-stat-number { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.spot-stat-label { color: #666; font-size: 13px; }
+
+/* --- Actions & Buttons --- */
+.spot-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.spot-actions select { min-width: 210px; padding: 10px 12px; border-radius: 10px; border: 1px solid #d8d2cc; }
+.spot-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.spot-btn { border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; background: #f3f0ee; color: #3c3c3c; font-size: 14px; transition: background 0.2s; }
+.spot-btn:hover { background: #e9e6e4; }
+.spot-btn.primary { background: var(--primary); color: white; }
+.spot-btn.primary:hover { background: #d4520c; }
+.spot-btn.descartar { background: #c13832; color: white; width: 100%; margin-top: auto; }
+.spot-btn.reincorporar { background: #f4aa00; color: white; width: 100%; margin-top: auto; }
+
+/* --- Filters --- */
+.spot-filters h3 { margin: 0 0 10px 0; font-size: 16px; }
+.spot-filters small { color: #888; font-weight: normal; margin-left: 8px; }
+.spot-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.spot-pill { border: 1px solid #d8d2cc; border-radius: 999px; padding: 10px 14px; background: #fbf8f6; color: var(--accent); cursor: pointer; transition: all 0.2s; }
+.spot-pill.active { background: var(--accent); color: white; border-color: transparent; }
+
+/* --- Legend --- */
+.spot-legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 13px; }
+.spot-legend strong { margin-right: 10px; }
+.spot-chip { padding: 8px 12px; border-radius: 999px; font-size: 12px; }
+.spot-chip.best { background: var(--teal); color: white; }
+.spot-chip.second { background: var(--accent); color: white; }
+.spot-chip.has-offer { background: #eef3f3; color: #2f4f4f; }
+.spot-chip.no-offer { background: #ffffff; color: #555; border: 1px solid #d8d2cc; }
+.spot-chip.discarded { background: #f8d7da; color: #8a2b2b; }
+
+
+/* ==========================================================================
+   --- Matrix Table (Sincronizada con CSS Grid) ---
+   ========================================================================== */
+
+.spot-matrix {
+    width: 100%;
+    overflow-y: auto;  /* Scroll vertical para materiales */
+    overflow-x: auto;  /* Scroll horizontal para los proveedores */
+    border: 1px solid var(--border);
+   /* margin-top: 12px;*/
+    background: #ffffff;
+    border-radius: 12px;
+}
+
+/* Estructura simétrica exacta para el encabezado y las filas */
+.spot-matrix-header, 
+.spot-matrix-row {
+    display: grid;
+    /* 280px para material, y cada proveedor mide exactamente 220px fijos */
+    grid-template-columns: 280px repeat(auto-fill, 220px);
+    min-width: max-content; 
+}
+
+/* Cabecera oscura fija arriba */
+.spot-matrix-header {
+    position: sticky;
+    top: 0;
+    z-index: 20; 
+    background-color: #2b2b2b; 
+}
+
+.spot-matrix-header-cell {
+    padding: 12px;
+    color: #ffffff;
+    text-align: center;
+    border-right: 1px solid #444444;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.spot-supplier-name { font-weight: 700; font-size: 14px; }
+.spot-supplier-rut { font-size: 12px; color: rgba(255,255,255,0.8); }
+.spot-supplier-metrics { display: flex; gap: 5px; margin-top: 5px; justify-content: center; }
+.spot-metric-box { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 6px; font-size: 10px; color: white; }
+
+.spot-pep-box { background: #106470; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+.spot-per-box { background: #E55302; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+.spot-ar-box { background: #000000; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+.spot-pep-per-ar { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+
+/* Configuración de Filas */
+.spot-matrix-row {
+    border-bottom: 1px solid #f3f2f1;
+    align-items: stretch; 
+    background: #ffffff;
+}
+
+.spot-matrix-row:nth-child(even) { 
+    background: #faf9f8; 
+}
+
+/* Columna de Detalles del Material */
+.spot-material-cell {
+    width: 280px;
+    padding: 14px;
+    box-sizing: border-box;
+    background-color: #faf9f8; 
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.spot-material-title { font-weight: 700; }
+.spot-material-meta { color: #666; font-size: 13px; }
+.spot-last-purchase { font-size: 12px; color: #888; margin-top: 4px; }
+.spot-last-purchase strong { font-weight: 700; color: #333; }
+
+/* Celdas de las Ofertas */
+.spot-supplier-cell {
+    width: 220px;
+    min-width: 220px;
+    padding: 38px 14px 14px 14px; /* Relleno superior para no colisionar con botones flotantes */
+    box-sizing: border-box;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    position: relative !important; /* Contexto vital para botones con position: absolute */
+}
+
+.spot-supplier-cell:last-child { border-right: none; }
+
+.spot-supplier-price { font-size: 18px; font-weight: 700; color: var(--teal); margin-bottom: 4px; }
+.spot-supplier-price-bestSecond { font-size: 18px; font-weight: 700; color: #fff; }
+.spot-supplier-price-best { background: #0098AA; border-radius: 8px; padding: 6px 8px; color: #fff; width: 90%; }
+.spot-supplier-price-second { background: var(--accent); border-radius: 8px; padding: 6px 8px; color: #fff; width: 90%; }
+.spot-supplier-price-ruleOut { background: #f8d7da; border-radius: 8px; padding: 6px 8px; color: #8a2b2b; text-decoration: line-through; width: 90%; }
+.spot-supplier-note { color: #666; font-size: 12px; margin-top: 2px; }
+.spot-supplier-note-best { color: #fff; font-size: 12px; margin-top: 2px; }
+.spot-no-offer { color: #a00; font-weight: 700; margin: auto; }
+
+/* Botones Absolutos dentro de su celda */
+.spot-btn-ver {
+    position: absolute !important;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.04);
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.15s ease;
+    z-index: 5;
+}
+.spot-btn-ver:hover { background: #f3f0ee; color: #000; }
+
+.spot-btn-aprobar {
+    position: absolute !important;
+    top: 6px;
+    right: 34px; 
+    background: rgba(0,0,0,0.04);
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.15s ease;
+    z-index: 5;
+}
+.spot-btn-aprobar:hover { background: #e6f7e6; }
+
+
+/* --- Modals (Shared) --- */
+.spot-prompt-overlay, .spot-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9999 !important;
+}
+
+.spot-modal-overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important; 
+}
+
+.spot-detail-card, .spot-modal-content {
+    background: #ffffff !important;
+    width: 90% !important;
+    max-width: 640px !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    font-family: "Segoe UI", Arial, sans-serif !important;
+}
+
+.spot-modal-content { max-width: 500px !important; }
+
+.spot-detail-header, .spot-modal-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin-bottom: 10px !important;
+}
+
+.spot-modal-title { margin: 0 !important; font-size: 22px !important; font-weight: 700 !important; color: #333 !important; }
+.spot-detail-header h2 { margin: 0 !important; font-size: 18px !important; font-weight: 700 !important; color: #1a1a1a !important; }
+
+.spot-badge-usd { background: #374151 !important; color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; padding: 3px 8px !important; border-radius: 6px !important; }
+
+/* Detail Grid */
+.spot-detail-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+.spot-detail-box { background: #f8f6f4 !important; border: 1px solid #e5dfda !important; border-radius: 12px !important; padding: 14px 16px !important; display: flex !important; align-items: center !important; gap: 14px !important; }
+.spot-detail-box.large { grid-column: span 2 !important; }
+.spot-detail-icon { font-size: 20px !important; color: #4a4a4a !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.spot-detail-icon.money { font-size: 24px !important; }
+.spot-box-label { font-size: 13px !important; color: #757575 !important; margin-bottom: 2px !important; }
+.spot-box-value { font-size: 15px !important; font-weight: 700 !important; }
+
+.value-teal { color: var(--teal) !important; }
+.value-dark { color: #2d3748 !important; }
+.value-gray { color: #a0aec0 !important; }
+.price-highlight { font-size: 20px !important; color: #111827 !important; }
+.price-meta { font-size: 14px !important; font-weight: 400 !important; color: #6b7280 !important; }
+
+/* Form Elements */
+.spot-offer-details-box { background: #f8f8f8 !important; border: 1px solid #e0e0e0 !important; border-radius: 8px !important; padding: 15px !important; margin-bottom: 10px !important; }
+.spot-offer-details-box h4 { margin-top: 0 !important; margin-bottom: 10px !important; font-size: 16px !important; color: #333 !important; }
+.spot-checkbox-group { display: flex !important; flex-direction: column !important; gap: 8px !important; margin-top: 10px !important; }
+.spot-checkbox-group label { font-size: 14px !important; color: #333 !important; display: flex !important; align-items: center !important; cursor: pointer !important; }
+.spot-checkbox-group input { margin-right: 8px !important; width: 16px !important; height: 16px !important; cursor: pointer !important; }
+.spot-textarea { width: 100% !important; padding: 10px !important; border: 1px solid #d8d2cc !important; border-radius: 8px !important; font-family: inherit !important; font-size: 14px !important; resize: vertical !important; box-sizing: border-box !important; }
+
+.spot-detail-footer, .spot-modal-actions { display: flex !important; justify-content: flex-end !important; gap: 10px !important; margin-top: 20px !important; }
+
+/* --- Responsive & Responsive Grids --- */
+@media (max-width: 1024px) {
+    .spot-matrix-row, .spot-matrix-header { 
+        grid-template-columns: 240px repeat(auto-fill, 180px) !important; 
+    }
+    .spot-material-cell { width: 240px !important; }
+    .spot-supplier-cell { width: 180px !important; min-width: 180px !important; }
+}
+@media (max-width: 820px) {
+    .spot-topbar, .spot-card, .spot-actions { flex-direction: column !important; align-items: stretch !important; }
+}
+@media (max-width: 520px) {
+    .spot-detail-grid { grid-template-columns: 1fr !important; }
+    .spot-detail-box.large { grid-column: span 1 !important; }
+}
