@@ -1,12 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { 
-    NormalPeoplePicker, 
-    IBasePickerSuggestionsProps 
-} from "@fluentui/react/lib/Pickers";
-import { IPersonaProps } from "@fluentui/react/lib/Persona";
 import { initializeIcons } from "@fluentui/react/lib/Icons";
-import { MaterialSupplier, validationsPromptResult,userTableRow } from "./interfaces";
+import { MaterialSupplier, validationsPromptResult, userTableRow } from "./interfaces";
 
 // Inicializamos los íconos Fluent de Microsoft
 initializeIcons();
@@ -15,42 +10,53 @@ interface IValidationModalProps {
     materialName: string;
     rutSupplier: string;
     offer: MaterialSupplier;
-    availableUsers: IPersonaProps[];
-    onConfirm: (email: string) => void;
+    onConfirm: (emails: string) => void;
     onCancel: () => void;
 }
 
-// 1. Componente construido sin usar JSX (Válido para archivos .ts)
-class ValidationModal extends React.Component<IValidationModalProps, { selectedUser: IPersonaProps | null }> {
+interface IValidationModalState {
+    emailsText: string;
+    error: string | null;
+}
+
+// Componente construido sin usar JSX (ideal para compatibilidad directa en archivos .ts)
+class ValidationModal extends React.Component<IValidationModalProps, IValidationModalState> {
     constructor(props: IValidationModalProps) {
         super(props);
-        this.state = { selectedUser: null };
+        this.state = { 
+            emailsText: "",
+            error: null
+        };
     }
 
-    private onFilterChanged = (filterText: string): IPersonaProps[] => {
-        if (!filterText) return [];
-        return this.props.availableUsers.filter(item => 
-            (item.text || "").toLowerCase().indexOf(filterText.toLowerCase()) !== -1 ||
-            (item.secondaryText || "").toLowerCase().indexOf(filterText.toLowerCase()) !== -1
-        );
-    };
-
     private handleConfirm = () => {
-        if (!this.state.selectedUser || !this.state.selectedUser.secondaryText) {
-            alert("Por favor, busca y selecciona un validador de la lista.");
+        const { emailsText } = this.state;
+        
+        if (!emailsText || !emailsText.trim()) {
+            this.setState({ error: "Por favor, ingresa al menos un correo electrónico." });
             return;
         }
-        this.props.onConfirm(this.state.selectedUser.secondaryText);
+
+        // Dividir los correos por punto y coma, limpiar espacios vacíos y filtrar elementos vacíos
+        const emails = emailsText.split(';').map(email => email.trim()).filter(Boolean);
+        
+        // Expresión regular simple para validar formato de correo electrónico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const invalidEmails = emails.filter(email => !emailRegex.test(email));
+
+        if (invalidEmails.length > 0) {
+            this.setState({ 
+                error: `Formato de correo inválido en: ${invalidEmails.join(', ')}` 
+            });
+            return;
+        }
+
+        this.setState({ error: null });
+        // Retornamos la cadena completa de correos tal cual la ingresó el usuario
+        this.props.onConfirm(emailsText);
     };
 
     render() {
-        const suggestionProps: IBasePickerSuggestionsProps = {
-            suggestionsHeaderText: 'Personas sugeridas',
-            noResultsFoundText: 'No se encontraron resultados',
-            loadingText: 'Buscando...',
-        };
-
-        // Construimos el árbol de elementos usando React.createElement para saltarnos el JSX
         return React.createElement("div", { className: "spot-modal" },
             React.createElement("div", { className: "spot-modal-overlay", onClick: this.props.onCancel }),
             React.createElement("div", { className: "spot-modal-content", style: { overflow: 'visible' } },
@@ -60,22 +66,36 @@ class ValidationModal extends React.Component<IValidationModalProps, { selectedU
                 React.createElement("p", null, "Proveedor: ", React.createElement("strong", null, `${this.props.offer.supplierName} (${this.props.rutSupplier})`)),
                 
                 React.createElement("div", { className: "spot-input-group", style: { marginTop: '15px' } },
-                    React.createElement("label", null, React.createElement("strong", null, "Usuario Revisor (Validador):")),
+                    React.createElement("label", null, React.createElement("strong", null, "Correos de Validadores (separados por ';'):")),
                     React.createElement("div", { style: { marginTop: '8px' } },
-                        // Inyectamos el People Picker Nativo de Microsoft
-                        React.createElement(NormalPeoplePicker, {
-                            onResolveSuggestions: this.onFilterChanged,
-                            getTextFromItem: (item: IPersonaProps) => item.text || '',
-                            pickerSuggestionsProps: suggestionProps,
-                            key: "normal-people-picker",
-                            onChange: (items?: IPersonaProps[]) => {
-                                if (items && items.length > 0) this.setState({ selectedUser: items[0] });
-                                else this.setState({ selectedUser: null });
+                        // Input de texto plano para ingresar correos manuales
+                        React.createElement("input", {
+                            type: "text",
+                            className: "spot-input",
+                            style: {
+                                width: '100%',
+                                padding: '10px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                boxSizing: 'border-box',
+                                fontSize: '14px'
                             },
-                            itemLimit: 1,
-                            inputProps: { placeholder: "Escribe el nombre o correo del revisor..." }
+                            placeholder: "usuario1@empresa.com; usuario2@empresa.com",
+                            value: this.state.emailsText,
+                            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                                this.setState({ emailsText: e.target.value, error: null });
+                            }
                         })
-                    )
+                    ),
+                    // Mensaje de error dinámico e inline (evitamos alert bloqueantes)
+                    this.state.error && React.createElement("div", {
+                        style: {
+                            color: '#a80000',
+                            fontSize: '12px',
+                            marginTop: '8px',
+                            fontWeight: 'bold'
+                        }
+                    }, this.state.error)
                 ),
                 
                 React.createElement("div", { className: "spot-modal-actions", style: { marginTop: '30px' } },
@@ -87,12 +107,12 @@ class ValidationModal extends React.Component<IValidationModalProps, { selectedU
     }
 }
 
-// 2. Función puente que llama tu index.ts
+// Función puente para inicializar y renderizar el Modal
 export function showValidationsPrompt(
     materialName: string,
     rutSupplier: string,
     offer: MaterialSupplier,
-    rawUsers: userTableRow[] = []// { displayName: string; mail: string; }[] = []
+    rawUsers: userTableRow[] = [] // Mantenido para no romper la firma de la función en otras llamadas
 ): Promise<validationsPromptResult | null> {
     return new Promise((resolve) => {
         const modalId = "spot-validation-modal";
@@ -107,11 +127,6 @@ export function showValidationsPrompt(
         targetDiv.id = modalId;
         document.body.appendChild(targetDiv);
         document.body.style.overflow = "hidden";
-       
-        const formattedUsers: IPersonaProps[] = rawUsers.map(u => ({
-            text: u.DisplayName,
-            secondaryText: u.Mail
-        }));
 
         const closePrompt = () => {
             ReactDOM.unmountComponentAtNode(targetDiv);
@@ -119,16 +134,15 @@ export function showValidationsPrompt(
             document.body.style.overflow = "";
         };
 
-        // Renderizamos el componente usando React.createElement
+        // Renderizamos el componente actualizado
         ReactDOM.render(
             React.createElement(ValidationModal, {
                 materialName,
                 rutSupplier,
                 offer,
-                availableUsers: formattedUsers,
-                onConfirm: (email) => {
+                onConfirm: (emails) => {
                     closePrompt();
-                    resolve({ id: offer.id, materialName, rutSupplier, email });
+                    resolve({ id: offer.id, materialName, /*rutSupplier,*/ email: emails });
                 },
                 onCancel: () => {
                     closePrompt();

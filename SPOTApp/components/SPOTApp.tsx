@@ -5,7 +5,6 @@ import { TableDataRow, MaterialSupplier, TableStats, userTableRow } from "../int
 export interface ISPOTAppProps {
     gridTitle: string;
     rows: TableDataRow[];
-    user365Users: userTableRow[]; // Added prop for O365 users
     onDiscard: (result: string) => void;
     onValidation: (email: string) => void;
 }
@@ -20,13 +19,12 @@ interface IUniqueSupplier {
     hasOTIF: boolean;
 }
 
-export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows,user365Users, onDiscard, onValidation }) => {
+export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, onValidation }) => {
     const [filterActive, setFilterActive] = useState<Set<string>>(new Set());
     const [uniqueSuppliers, setUniqueSuppliers] = useState<IUniqueSupplier[]>([]);
    // const [users, setUsers] = useState<userTableRow[]>([]); // State to hold O365 users
 
     useEffect(() => {
-       // setUsers(user365Users);
         const suppliers = getUniqueSupplierRuts(rows);
         setUniqueSuppliers(suppliers);
         setFilterActive(new Set(suppliers.map(s => s.rut)));
@@ -151,8 +149,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows,user365Users,
                         <MatrixRow 
                             key={idx} 
                             row={row} 
-                            activeSuppliers={activeSuppliersList} 
-                            user365Users={user365Users}
+                            activeSuppliers={activeSuppliersList}  
                             onDiscard={onDiscard}
                             onValidation={onValidation}
                         />
@@ -189,10 +186,9 @@ const Legend: React.FC = () => (
 const MatrixRow: React.FC<{ 
     row: TableDataRow; 
     activeSuppliers: IUniqueSupplier[]; 
-    user365Users: userTableRow[];
     onDiscard: (res: string) => void;
     onValidation: (email: string) => void;
-}> = ({ row, activeSuppliers, user365Users, onDiscard, onValidation }) => {
+}> = ({ row, activeSuppliers,  onDiscard, onValidation }) => {
     return (
         <div className="spot-matrix-row">
             <div className="spot-material-cell">
@@ -202,6 +198,8 @@ const MatrixRow: React.FC<{
                     Últ. compra <strong>USD {Number(row.lastPurchasePrice).toFixed(2)}</strong> - {row.lastPurchaseDate}
                 </div>
                 <div className="spot-last-purchase">SOLPED: {row.requisitionId}</div>
+                <div className="spot-last-purchase"> <strong> {row.agreement ? "Tiene un convenio que vence el " + row.agreementDate : ""}</strong></div>
+                <div className="spot-last-purchase"> <strong> {row.agreement ? row.agreementDetails : ""}</strong></div>
             </div>
             {activeSuppliers.map(supplier => {
                 const offer = row.suppliers.find(s => s.rutSupplier === supplier.rut);
@@ -223,7 +221,6 @@ const MatrixRow: React.FC<{
                                 offer={offer} 
                                 materialName={row.materialName} 
                                 materialNumber={row.materialNumber}
-                                user365Users={user365Users}
                                 onDiscard={onDiscard}
                                 onValidation={onValidation}
                             />
@@ -239,10 +236,9 @@ const OfferCell: React.FC<{
     offer: MaterialSupplier; 
     materialName: string; 
     materialNumber: string;
-    user365Users: userTableRow[];
     onDiscard: (res: string) => void;
     onValidation: (email: string) => void;
-}> = ({ offer, materialName, materialNumber,user365Users, onDiscard, onValidation }) => {
+}> = ({ offer, materialName, materialNumber, onDiscard, onValidation }) => {
     const isBest = offer.esMasBarato === 1;
     const isSecond = offer.esMasBarato === 2;
     
@@ -252,7 +248,7 @@ const OfferCell: React.FC<{
     // SOLUCIÓN CON ASYNC/AWAIT: Desaparece el error del .then()
     const handleValidations= async () => {
         try {
-            const res = await window.showValidationsPrompt(materialName, offer.rutSupplier, offer, user365Users);
+            const res = await window.showValidationsPrompt(materialName, offer.rutSupplier, offer);
             if (res && res.email) {
                 onValidation(JSON.stringify(res));
             }
@@ -276,11 +272,24 @@ const OfferCell: React.FC<{
         }
     };
 
+    const handleDetail = async () => {
+        try {
+
+            const res = await window.showDetailPrompt(materialName, materialNumber, offer);
+            
+            if (res && res.email) {
+                onValidation(JSON.stringify(res));
+            }
+        } catch (err) {
+            console.warn("Descarte/Reincorporación cancelada:", err);
+        }
+    };
+
     return (
         <>
             {/* ... Tu JSX se mantiene exactamente igual abajo ... */}
             <div className="spot-metric-box">{offer.esMasBarato || "-"}°</div>
-            <button className="spot-btn-ver" onClick={() => window.showDetailPrompt(materialName, materialNumber, offer)}>🔍</button>
+            <button className="spot-btn-ver" onClick={handleDetail}>🔍</button>
             {offer.esMasBarato === 1 && !offer.ruleOut && <button className="spot-btn-aprobar" onClick={handleValidations}>📄</button>}
             
             
@@ -292,7 +301,7 @@ const OfferCell: React.FC<{
                 Prec. Hom.: USD {priceHom.toFixed(2)} - {percHome.toFixed(2)}%
             </div>
             <div className={isBest || isSecond ? 'spot-supplier-note-best' : 'spot-supplier-note'}>Modelo: {offer.brandModel || "-"}</div>
-            <div className={isBest || isSecond ? 'spot-supplier-note-best' : 'spot-supplier-note'}>Entrega: {offer.deliveryDays} días {offer.incoterm || "-"}
+            <div className={isBest || isSecond ? 'spot-supplier-note-best' : 'spot-supplier-note'}>Entrega: {offer.deliveryDays} días -  {offer.incoterm || "-"}
                 {offer.hasADD ? "⚠️ Existe un ADD" : ""}
 
             </div>

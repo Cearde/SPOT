@@ -17,6 +17,11 @@ export interface MaterialSupplier {
     id: number;
     hasADD: boolean;
     hasOTIF: boolean;
+    resultProcessAI: string;
+    confidenceRating: number;
+    summaryJustification: string;
+    fileBase64:string;
+    
     //discardReasons: string[]  | null;
    // discardObservations: string | null;
 }
@@ -30,6 +35,9 @@ export interface TableDataRow {
     requisitionId: string;
     lastPurchasePrice: number;
     lastPurchaseDate: string;
+    agreement: boolean;
+    agreementDate: string | null;
+    agreementDetails: string | null;
 }
 
 export interface userTableRow {
@@ -66,6 +74,6 @@ export interface DiscardPromptResult {
 export interface validationsPromptResult {
     id: number;
     materialName: string;
-    rutSupplier: string;
+    //rutSupplier: string;
     email: string;
 }

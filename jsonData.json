@@ -7,6 +7,9 @@
         "quantityUnitCode": "EA        ",
         "lastPurchasePrice": 17.40,
         "lastPurchaseDate": "01\/02\/2026",
+        "agreement": true,
+        "agreementDate": "01\/02\/2026",
+        "agreementDetails":"44444444-4, RFQ 1",
         "suppliers": [
             {
                 "rutSupplier": "19707560-0",
@@ -23,7 +26,12 @@
                 "incotermPerc": 11.00,
                 "id": 169,
                 "hasADD": 0,
-                "hasOTIF": 1
+                "hasOTIF": 1,
+                "resultProcessAI": "FICHA_TECNICA",
+                "confidenceRating": 0.9,
+                "summaryJustification": "Resultado de la evaluación"
+                
+                
             },
             {
                 "rutSupplier": "25574060-1",
@@ -40,7 +48,10 @@
                 "incotermPerc": 11.00,
                 "id": 170,
                 "hasADD": 0,
-                "hasOTIF": 0
+                "hasOTIF": 0,
+                "resultProcessAI": "FICHA_TECNICA",
+                "confidenceRating": 0.5,
+                "summaryJustification": "test"
             }
         ]
     },
@@ -68,7 +79,10 @@
                 "incotermPerc": 11.00,
                 "id": 171,
                 "hasADD": 1,
-                "hasOTIF": 1
+                "hasOTIF": 1,
+                "resultProcessAI": "FICHA_TECNICA",
+                "confidenceRating": 0.3,
+                "summaryJustification": "tes2"
             },
             {
                 "rutSupplier": "25574060-1",
@@ -85,7 +99,10 @@
                 "incotermPerc": 11.00,
                 "id": 172,
                 "hasADD": 1,
-                "hasOTIF": 0
+                "hasOTIF": 0,
+                "resultProcessAI": "FICHA_TECNICA",
+                "confidenceRating": 0.7,
+                "summaryJustification": "tes3"
             }
         ]
     }

@@ -37,7 +37,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
         this._props = {
             gridTitle: context.parameters.gridTitle?.raw || "Matriz SPOT",
             rows: this.parseTableData(context.parameters.tableData?.raw),
-            user365Users: this.parseUsuariosTable(context.parameters.usuariosEmpresa?.raw),
+           // user365Users: this.parseUsuariosTable(context.parameters.usuariosEmpresa?.raw),
             onDiscard: (result: string) => {
                 this._discardData = result;
                 this._validationEmail = ""; // Clear validation email if discard action is taken
@@ -110,6 +110,9 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
                 lastPurchasePrice?: number; 
                 lastPurchaseDate?: string; 
                 suppliers?: unknown[]; 
+                agreement: boolean;
+                agreementDate: string;
+                agreementDetails: string;
             }) => ({
                 materialName: String(item.materialName ?? ""),
                 requisitionId: String(item.requisitionId ?? ""),
@@ -119,6 +122,9 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
                 id: Number(item.id ?? 0),
                 lastPurchasePrice: Number(item.lastPurchasePrice ?? 0),
                 lastPurchaseDate: String(item.lastPurchaseDate ?? "N/A"),
+                agreement: Boolean(item.agreement),
+                agreementDate: String(item.agreementDate ?? "") || null,
+                agreementDetails: String(item.agreementDetails ?? "") || null,                
                 suppliers: Array.isArray(item.suppliers)
                     ? item.suppliers
                         .map((s) => this.normalizeSupplier(s as Record<string, unknown>))
@@ -151,7 +157,12 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
             ruleOutObservations: String(supplier.ruleOutObservations ?? "") || null,
             id: Number(supplier.id ?? 0),
             hasADD: Boolean(supplier.hasADD),
-            hasOTIF: Boolean(supplier.hasOTIF)
+            hasOTIF: Boolean(supplier.hasOTIF),
+            resultProcessAI: String(supplier.resultProcessAI ?? ""),
+            confidenceRating: Number(supplier.confidenceRating) || 0,
+            summaryJustification: String(supplier.summaryJustification ?? ""),
+            fileBase64: String(supplier.fileBase64 ?? ""),
+            
         };
     }
 }
