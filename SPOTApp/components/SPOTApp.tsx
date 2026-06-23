@@ -1,12 +1,14 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { TableDataRow, MaterialSupplier, TableStats, userTableRow } from "../interfaces";
+import {showCloseBiddingPrompt} from "../closePrompt"
 
 export interface ISPOTAppProps {
     gridTitle: string;
     rows: TableDataRow[];
     onDiscard: (result: string) => void;
     onValidation: (email: string) => void;
+    onClose: (result: string) => void;
 }
 
 interface IUniqueSupplier {
@@ -19,7 +21,7 @@ interface IUniqueSupplier {
     hasOTIF: boolean;
 }
 
-export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, onValidation }) => {
+export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, onValidation,onClose }) => {
     const [filterActive, setFilterActive] = useState<Set<string>>(new Set());
     const [uniqueSuppliers, setUniqueSuppliers] = useState<IUniqueSupplier[]>([]);
    // const [users, setUsers] = useState<userTableRow[]>([]); // State to hold O365 users
@@ -52,6 +54,20 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, o
         return unique;
     };
 
+     const handleClosed = async () => {
+        try {
+          //  const res = offer.ruleOut 
+                ///? await window.showDiscardPrompt(materialName, offer.rutSupplier, offer, offer.ruleOutReason, offer.ruleOutObservations)
+                const res = await showCloseBiddingPrompt("","");
+            
+            if (res) {
+                onClose(JSON.stringify(res));
+            }
+        } catch (err) {
+            console.warn("Descarte/Reincorporación cancelada:", err);
+        }
+    };
+
     const toggleFilter = (rut: string) => {
         const newFilters = new Set(filterActive);
         if (newFilters.has(rut)) {
@@ -78,10 +94,8 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, o
 
     return (
         <div className="spot-app">
-            <section className="spot-card">
-                <h1 className="spot-card-title">{gridTitle}</h1>
-                <p className="spot-card-subtitle">Comparativa de ofertas de materiales y proveedores para la licitación 1.1.6</p>
-                                    <div className="spot-stats">
+            <section className="spot-card">  
+                <div className="spot-stats">
                     <StatBox label="Total proveedores" value={stats.totalSuppliers.toString()} />
                     <StatBox label="Proveedores calificados" value={stats.qualifiedSuppliers.toString()} modifier="highlight" />
                     <StatBox label="Proveedores descartados" value={stats.discardedSuppliers.toString()} modifier="danger" />
@@ -92,7 +106,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, o
                     <select><option>Menor precio unitario</option></select>
                     <div className="spot-buttons">
                         <button className="spot-btn">Descargar informe</button>
-                        <button className="spot-btn primary">Cerrar licitación</button>
+                        <button className="spot-btn primary" onClick={handleClosed}>Cerrar licitación</button>
                     </div>
                 </div>
             </section>
@@ -241,7 +255,7 @@ const OfferCell: React.FC<{
 }> = ({ offer, materialName, materialNumber, onDiscard, onValidation }) => {
     const isBest = offer.esMasBarato === 1;
     const isSecond = offer.esMasBarato === 2;
-    
+    const classBid = (isBest || isSecond) && !offer.ruleOut ? 'spot-supplier-note-best' : 'spot-supplier-note'; 
     const priceHom = offer.price * (1 + offer.incotermPerc / 100);
     const percHome = offer.price > 0 ? ((priceHom - offer.price) / offer.price) * 100 : 0;
 
@@ -249,6 +263,7 @@ const OfferCell: React.FC<{
     const handleValidations= async () => {
         try {
             const res = await window.showValidationsPrompt(materialName, offer.rutSupplier, offer);
+         
             if (res && res.email) {
                 onValidation(JSON.stringify(res));
             }
@@ -272,6 +287,8 @@ const OfferCell: React.FC<{
         }
     };
 
+   
+
     const handleDetail = async () => {
         try {
 
@@ -289,21 +306,36 @@ const OfferCell: React.FC<{
         <>
             {/* ... Tu JSX se mantiene exactamente igual abajo ... */}
             <div className="spot-metric-box">{offer.esMasBarato || "-"}°</div>
-            <button className="spot-btn-ver" onClick={handleDetail}>🔍</button>
-            {offer.esMasBarato === 1 && !offer.ruleOut && <button className="spot-btn-aprobar" onClick={handleValidations}>📄</button>}
+           
+            {offer.esMasBarato === 1 && !offer.ruleOut  && offer.validationStatus.toLowerCase() !== "aprobado" && 
+                 <button className="spot-btn-ver" onClick={handleDetail}>🔍</button>
+            }
+
+            {offer.esMasBarato === 1 && !offer.ruleOut  && offer.validationStatus.toLowerCase() !== "aprobado" && 
+            offer.validationStatus.toLowerCase()==="2" &&
+                <button className="spot-btn-aprobar" onClick={handleValidations}>📄</button>
+            }
+            {offer.validationStatus && 
+               <div className={classBid}> Ficha técnica:
+                            {offer.validationStatus.toLowerCase() === "aprobado" ? " Aprobada ✅" :
+                            offer.validationStatus.toLowerCase() === "rechazado" ? " Rechazada ❌" :
+                            " En Espera ⏳"}
+                </div>
+            }
             
-            
-            <div className={`spot-supplier-price ${isBest ? 'spot-supplier-price-best' : isSecond ? 'spot-supplier-price-second' : ''} ${offer.ruleOut ? 'spot-supplier-price-ruleOut' : ''}`}>
+            <div className={`spot-supplier-price ${isBest ? 'spot-supplier-price-best' : isSecond ? 'spot-supplier-price-second' : ''} 
+                ${offer.ruleOut ? 'spot-supplier-price-ruleOut' : ''}`}>
                 USD {offer.price.toFixed(2)}
             </div>
             
-            <div className={isBest || isSecond ? 'spot-supplier-note-best' : 'spot-supplier-note'}>
+            <div className={classBid}>
                 Prec. Hom.: USD {priceHom.toFixed(2)} - {percHome.toFixed(2)}%
             </div>
-            <div className={isBest || isSecond ? 'spot-supplier-note-best' : 'spot-supplier-note'}>Modelo: {offer.brandModel || "-"}</div>
-            <div className={isBest || isSecond ? 'spot-supplier-note-best' : 'spot-supplier-note'}>Entrega: {offer.deliveryDays} días -  {offer.incoterm || "-"}
+            <div className={classBid}>Modelo: {offer.brandModel || "-"}</div>
+            <div className={classBid}>Entrega: {offer.deliveryDays} días -  {offer.incoterm || "-"}
+            </div>
+            <div className={classBid}>
                 {offer.hasADD ? "⚠️ Existe un ADD" : ""}
-
             </div>
             
             <div className="spot-buttons">

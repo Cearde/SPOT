@@ -40,21 +40,38 @@ export function showDetailPrompt(
     let statusIcon = "📄";
 
     if (docTypeRaw === "FICHA_TECNICA" || docTypeRaw === "FICHA_TÉCNICA") {
-        bannerBgColor = "#f0fdf4"; // Fondo verde claro
+        //bannerBgColor = "#f0fdf4"; // Fondo verde claro
         statusText = "Ficha Técnica Validada por IA";
-        badgeHTML = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
-        statusIcon = "🟢";
+       // badgeHTML = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
+       // statusIcon = "🟢";
     } else if (docTypeRaw === "OFERTA_COMERCIAL") {
-        bannerBgColor = "#fffbeb"; // Fondo amarillo claro
+        //bannerBgColor = "#fffbeb"; // Fondo amarillo claro
         statusText = "Oferta Comercial Detectada";
-        badgeHTML = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
-        statusIcon = "⚠️";
+        //badgeHTML = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
+        //statusIcon = "⚠️";
     } else if (docTypeRaw === "DESCARTADO" || docTypeRaw === "RECHAZADO") {
-        bannerBgColor = "#fff1f2"; // Fondo rojo claro
+        //bannerBgColor = "#fff1f2"; // Fondo rojo claro
         statusText = "Documento Descartado";
-        badgeHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
-        statusIcon = "🚫";
+        //badgeHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
+       // statusIcon = "🚫";
     }
+
+    if(confidenceRaw >= 0.8) {
+        badgeHTML = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
+        bannerBgColor = "#f0fdf4"; // Fondo verde claro
+        statusIcon = "✅";
+    }else if (confidenceRaw >= 0.5 && confidenceRaw < 0.8) {
+        badgeHTML = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
+        bannerBgColor = "#fffbeb"; // Fondo amarillo claro
+        statusIcon = "⚠️";
+    } else {
+        badgeHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
+        bannerBgColor = "#fff1f2"; // Fondo rojo claro
+        statusIcon = "❌";
+    }
+    // Evaluación segura de la condición de validación
+    const isApproved = (offer.validationStatus || "").toLowerCase() === "aprobado";
+    const showEmailSection = !offer.onValidation && !isApproved;
 
     // 4. Inyectar la estructura HTML interna del modal (incluyendo el campo de correos)
     card.innerHTML = `
@@ -80,14 +97,23 @@ export function showDetailPrompt(
         </div>
 
         <!-- Entrada de Correos Electrónicos separados por ';' -->
-        <div class="spot-ai-info-section">
-            <div class="spot-ai-info-title">Destinatarios de Validación</div>
-            <input type="text" class="spot-email-input" 
-                placeholder="ejemplo1@empresa.com; ejemplo2@empresa.com" 
-                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 13px;" />
-            <div class="spot-email-error" style="color: #dc2626; font-size: 12px; margin-top: 6px; display: none; font-weight: 600;"></div>
+        ${showEmailSection ? `
+            <div class="spot-ai-info-section">
+                <div class="spot-ai-info-title">Destinatarios de Validación</div>
+                <input type="text" class="spot-email-input" 
+                    placeholder="ejemplo1@empresa.com; ejemplo2@empresa.com" 
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 13px;" />
+                <div class="spot-email-error" style="color: #dc2626; font-size: 12px; margin-top: 6px; display: none; font-weight: 600;"></div>
+            </div>
+        ` : `
+            <div class="spot-ai-info-section">
+            <div class="spot-ai-info-title">Estado de la Validación</div>
+            <div style="display: flex; align-items: center; gap: 8px; background-color: #f0fdfa; border: 1px solid #ccfbf1; padding: 12px; border-radius: 8px;">
+                <span style="font-size: 18px; line-height: 1;">⏳</span>
+                <span style="font-size: 13px; font-weight: 600; color: #0d9488;">Documento en validación</span>
+            </div>
         </div>
-
+        `}
         <!-- Botones de acción del Modal -->
         <div class="spot-detail-actions-layout">
             <button class="spot-btn-close-simple">Cerrar</button>
@@ -97,27 +123,39 @@ export function showDetailPrompt(
                 </svg>
                 Descargar
             </button>
-            <button class="spot-btn-send" style="background-color: #0284c7; color: #ffffff; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.15s ease;">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10l9 6 9-6"></path>
-                </svg>
-                Enviar
-            </button>
+            ${showEmailSection ? `
+                <!-- Botón de enviar habilitado y funcional -->
+                <button class="spot-btn-send" style="background-color: #0284c7; color: #ffffff; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.15s ease;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10l9 6 9-6"></path>
+                    </svg>
+                    Enviar
+                </button>
+            ` : `
+                <!-- Botón de enviar deshabilitado (No interactivo) -->
+                <button class="spot-btn-send" disabled style="background-color: #cbd5e1; color: #94a3b8; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.82;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10l9 6 9-6"></path>
+                    </svg>
+                    Enviar
+                </button>
+            `}
         </div>
     `;
 
     // 5. Lógica de decodificación y descarga del documento en formato Base64
     const handleDownload = () => {
-        const rawBase64 = offer.fileBase64 //|| offer.documentBase64 || offer.base64;
+        const base64 = offer.fileBase64 //|| offer.documentBase64 || offer.base64;
         
-        if (!rawBase64) {
+        if (!base64) {
             alert("No se encontró el contenido del documento en Base64 para descargar.");
             return;
         }
 
         try {
-            // Remueve cualquier prefijo de Data URI en caso de que esté presente
+          /*  // Remueve cualquier prefijo de Data URI en caso de que esté presente
             const cleanBase64 = rawBase64.replace(/^data:[^;]+;base64,/, "");
             
             // Convertir la cadena Base64 en datos binarios decodificados
@@ -162,7 +200,37 @@ export function showDetailPrompt(
         } catch (error) {
             console.error("Error al decodificar y descargar el Base64:", error);
             alert("Ocurrió un error al intentar procesar y descargar el archivo.");
+        }*/
+
+       // Detectar si el Base64 corresponde a una imagen para asignar su formato correcto
+      const cleanBase64 = base64.replace(/^data:[^;]+;base64,/, "");
+            let mimeType = offer.mimeType;
+            let extension = "pdf";
+            
+            if (base64.startsWith("data:image/png")) {
+                mimeType = "image/png";
+                extension = "png";
+            } else if (base64.startsWith("data:image/jpeg") || base64.startsWith("data:image/jpg")) {
+                mimeType = "image/jpeg";
+                extension = "jpg";
+            }
+
+            const dataUri = `data:${mimeType};base64,${cleanBase64}`;
+            const sanitizedDocName = docTypeRaw.replace(/\s+/g, "_");
+            const fileName = `Doc_${sanitizedDocName}_${materialNumber}.${extension}`;
+
+            const downloadLink = document.createElement("a");
+            downloadLink.href = dataUri;
+            downloadLink.download = fileName;
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        } catch (error) {
+            console.error("Error crítico durante la generación de la descarga en Power Apps:", error);
         }
+
+
     };
 
     // 6. Lógica para procesar, validar y enviar los correos

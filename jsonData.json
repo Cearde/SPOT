@@ -7,9 +7,6 @@
         "quantityUnitCode": "EA        ",
         "lastPurchasePrice": 17.40,
         "lastPurchaseDate": "01\/02\/2026",
-        "agreement": true,
-        "agreementDate": "01\/02\/2026",
-        "agreementDetails":"44444444-4, RFQ 1",
         "suppliers": [
             {
                 "rutSupplier": "19707560-0",
@@ -29,9 +26,9 @@
                 "hasOTIF": 1,
                 "resultProcessAI": "FICHA_TECNICA",
                 "confidenceRating": 0.9,
-                "summaryJustification": "Resultado de la evaluación"
-                
-                
+                "summaryJustification": "Resultado de la evaluación",
+                "onValidation": false,
+                "validationStatus": "Aprobado"
             },
             {
                 "rutSupplier": "25574060-1",
@@ -46,6 +43,12 @@
                 "esMasBarato": 2,
                 "incoterm": "EBC",
                 "incotermPerc": 11.00,
+                "ruleOut": true,
+                "ruleOutReason": [
+                    "Precio fuera de rango",
+                    "Plazo de entrega excesivo"
+                ],
+                "ruleOutObservations": "Rechazado",
                 "id": 170,
                 "hasADD": 0,
                 "hasOTIF": 0,
@@ -82,7 +85,9 @@
                 "hasOTIF": 1,
                 "resultProcessAI": "FICHA_TECNICA",
                 "confidenceRating": 0.3,
-                "summaryJustification": "tes2"
+                "summaryJustification": "tes2",
+                "onValidation": true,
+                "validationStatus": "Rechazado"
             },
             {
                 "rutSupplier": "25574060-1",

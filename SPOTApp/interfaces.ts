@@ -21,6 +21,11 @@ export interface MaterialSupplier {
     confidenceRating: number;
     summaryJustification: string;
     fileBase64:string;
+    mimeType:string;
+    onValidation:boolean;
+	validationStatus:string;
+    attachmentValueID:string;
+    attachmentFileName:string;
     
     //discardReasons: string[]  | null;
    // discardObservations: string | null;
@@ -76,4 +81,9 @@ export interface validationsPromptResult {
     materialName: string;
     //rutSupplier: string;
     email: string;
+}
+
+export interface CloseBiddingResult {
+    decision: boolean;  // true si presiona "Aceptar", false si presiona "Cancelar"
+    email: string;      // Correo electrónico ingresado (cadena vacía si no se especificó)
 }

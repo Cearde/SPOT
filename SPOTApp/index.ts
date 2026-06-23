@@ -20,6 +20,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
     private _props: ISPOTAppProps;
     private _discardData: string | undefined;
     private _validationEmail: string | undefined;
+    private _closeData: string | undefined;
 
     //constructor() {}
 
@@ -47,6 +48,12 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
                 this._validationEmail = email;
                 this._discardData = ""; // Clear discard data if validation action is taken
                 this._notifyOutputChanged();
+            },
+            onClose:(result: string) => {
+                this._closeData = result;
+                this._discardData = "";
+                this._validationEmail = ""; // Clear validation email if discard action is taken
+                this._notifyOutputChanged();
             }
         };
 
@@ -65,7 +72,8 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
     public getOutputs(): IOutputs {
         return {
             datosDescarte: this._discardData,
-            correoValidacion: this._validationEmail
+            correoValidacion: this._validationEmail,
+            cerrarOferta: this._closeData
         };
     }
 
@@ -162,7 +170,11 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
             confidenceRating: Number(supplier.confidenceRating) || 0,
             summaryJustification: String(supplier.summaryJustification ?? ""),
             fileBase64: String(supplier.fileBase64 ?? ""),
-            
+            mimeType:String(supplier.mimeType ?? ""),
+            onValidation: Boolean(supplier.onValidation ?? false),
+            validationStatus: String(supplier.validationStatus ?? ""),
+            attachmentValueID: String(supplier.attachmentValueID ?? ""),
+            attachmentFileName: String(supplier.attachmentFileName ?? "")
         };
     }
 }
