@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { TableDataRow, MaterialSupplier, TableStats, userTableRow } from "../interfaces";
+import { TableDataRow, MaterialSupplier, TableStats, userTableRow, IBiddingDocument } from "../interfaces";
 import {showCloseBiddingPrompt} from "../closePrompt"
 
 export interface ISPOTAppProps {
@@ -9,6 +9,10 @@ export interface ISPOTAppProps {
     onDiscard: (result: string) => void;
     onValidation: (email: string) => void;
     onClose: (result: string) => void;
+
+    biddingDocuments: IBiddingDocument[];
+    //selectedDocument?: string;
+    onDocumentChange?: (documentId: string) => void;
 }
 
 interface IUniqueSupplier {
@@ -21,16 +25,54 @@ interface IUniqueSupplier {
     hasOTIF: boolean;
 }
 
-export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, onValidation,onClose }) => {
+export const SPOTApp: React.FC<ISPOTAppProps> = ({ 
+    gridTitle, 
+    rows, 
+    onDiscard, 
+    onValidation,
+    onClose,    
+    biddingDocuments,
+    //selectedDocument//,
+    onDocumentChange
+}) => {
     const [filterActive, setFilterActive] = useState<Set<string>>(new Set());
     const [uniqueSuppliers, setUniqueSuppliers] = useState<IUniqueSupplier[]>([]);
-   // const [users, setUsers] = useState<userTableRow[]>([]); // State to hold O365 users
+    const [documentsList, setBiddingDocumentsList] = useState<IBiddingDocument[]>([]);
+    const [selectedDoc, setSelectedDoc] = useState<string>(""); // Start with empty
 
     useEffect(() => {
         const suppliers = getUniqueSupplierRuts(rows);
         setUniqueSuppliers(suppliers);
         setFilterActive(new Set(suppliers.map(s => s.rut)));
     }, [rows]);
+
+    useEffect(() => {
+        let docs: IBiddingDocument[] = [];
+        if (biddingDocuments) {
+            try {
+                const parsedDocs = biddingDocuments;// JSON.parse(biddingDocuments);
+                if (Array.isArray(parsedDocs)) {
+                    docs = parsedDocs;
+                }
+            } catch (e) {
+                console.error("Failed to parse biddingDocuments", e);
+            }
+        }
+        setBiddingDocumentsList(docs);
+
+        if (selectedDoc && docs.some(d => d.value === selectedDoc)) {
+            setSelectedDoc(selectedDoc);
+        } else if (docs.length > 0) {
+            const firstDocValue = docs[0].value;
+            setSelectedDoc(firstDocValue);
+            if (onDocumentChange) {
+                onDocumentChange(firstDocValue);
+            }
+        } else {
+            setSelectedDoc("");
+        }
+    }, [biddingDocuments, selectedDoc]);
+
 
     const getUniqueSupplierRuts = (dataRows: TableDataRow[]): IUniqueSupplier[] => {
         const seen = new Set<string>();
@@ -88,12 +130,61 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({ gridTitle, rows, onDiscard, o
             materialsWithoutOffer
         };
     };
+    const handleDocChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const newValue = event.target.value;
+        setSelectedDoc(newValue);
+        if (onDocumentChange) {
+            onDocumentChange(newValue);
+        }
+    };
 
     const stats = calculateStats();
     const activeSuppliersList = uniqueSuppliers.filter(s => filterActive.has(s.rut));
 
     return (
-        <div className="spot-app">
+            <div className="spot-app">
+              {/* ==========================================================================
+               NUEVA CABECERA INSTITUCIONAL INTEGRADA DE CODELCO (Estilos Tailwind exactos)
+               ========================================================================== */}
+           {/* CABECERA NARANJA SIMPLIFICADA (Logo izquierda, Título centro, Selector derecha) */}
+            <header className="spot-header">
+                <div className="spot-header-left">
+                    <img 
+                        className="spot-header-logo" 
+                        src="logo_codelco.png" 
+                        alt="CODELCO" 
+                        onError={(e) => {
+                            e.currentTarget.onerror = null; 
+                            e.currentTarget.src = "https://placehold.co/120x36/E35205/FFFFFF?text=CODELCO";
+                        }}
+                    />
+                </div>
+                <div className="spot-header-center">
+                    <h1 className="spot-header-title">
+                        Compra SPOT
+                    </h1>
+                </div>
+                <div className="spot-header-right">
+                    <select 
+                        id="docSelector" 
+                        value={selectedDoc}
+                        onChange={handleDocChange}
+                        className="spot-header-selector"
+                    >
+                        {documentsList.length === 0 ? (
+                            <option value="">Sin documentos</option>
+                        ) : (
+                            documentsList.map((doc) => (
+                                <option key={doc.value} value={doc.value}>
+                                    {doc.label}
+                                </option>
+                            ))
+                        )}
+                    </select>
+                </div>
+            </header>
+
+
             <section className="spot-card">  
                 <div className="spot-stats">
                     <StatBox label="Total proveedores" value={stats.totalSuppliers.toString()} />

@@ -87,3 +87,8 @@ export interface CloseBiddingResult {
     decision: boolean;  // true si presiona "Aceptar", false si presiona "Cancelar"
     email: string;      // Correo electrónico ingresado (cadena vacía si no se especificó)
 }
+
+export interface IBiddingDocument {
+    value: string;
+    label: string;
+}

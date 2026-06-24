@@ -2,7 +2,7 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SPOTApp as SPOTAppGrid, ISPOTAppProps } from "./components/SPOTApp";
-import { TableDataRow, MaterialSupplier, userTableRow } from "./interfaces";
+import { TableDataRow, MaterialSupplier, userTableRow, IBiddingDocument } from "./interfaces";
 
 // Import existing prompt functions
 import { showDiscardPrompt } from "./discardPrompt";
@@ -21,8 +21,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
     private _discardData: string | undefined;
     private _validationEmail: string | undefined;
     private _closeData: string | undefined;
-
-    //constructor() {}
+    private _selectedDocument: string | undefined;
 
     public init(
         context: ComponentFramework.Context<IInputs>,
@@ -34,25 +33,42 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
         this._notifyOutputChanged = notifyOutputChanged;
         this._container.style.height = "100%";
         this._container.style.overflow = "hidden";  
+        (window as any).pcfContext = context;
         
+       // this._selectedDocument = context.parameters.selectedDocument?.raw ?? undefined;
+
         this._props = {
             gridTitle: context.parameters.gridTitle?.raw || "Matriz SPOT",
             rows: this.parseTableData(context.parameters.tableData?.raw),
-           // user365Users: this.parseUsuariosTable(context.parameters.usuariosEmpresa?.raw),
             onDiscard: (result: string) => {
                 this._discardData = result;
-                this._validationEmail = ""; // Clear validation email if discard action is taken
+                this._validationEmail = "";
+                this._closeData = "";
+                this._selectedDocument = "";
                 this._notifyOutputChanged();
             },
             onValidation: (email: string) => {
                 this._validationEmail = email;
-                this._discardData = ""; // Clear discard data if validation action is taken
+                this._selectedDocument = "";
+                this._closeData = "";
+                this._discardData = "";
+                this._selectedDocument = "";
                 this._notifyOutputChanged();
             },
             onClose:(result: string) => {
                 this._closeData = result;
+                this._selectedDocument = "";
                 this._discardData = "";
-                this._validationEmail = ""; // Clear validation email if discard action is taken
+                this._validationEmail = "";
+                this._notifyOutputChanged();
+            },
+            biddingDocuments: this.parseBiddingDocument(context.parameters.biddingDocuments?.raw),
+            //selectedDocument: this._selectedDocument,
+            onDocumentChange: (docId: string) => {
+                this._selectedDocument = docId;
+                this._closeData = "";
+                this._discardData = "";
+                this._validationEmail = "";
                 this._notifyOutputChanged();
             }
         };
@@ -63,8 +79,9 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
     public updateView(context: ComponentFramework.Context<IInputs>): void {
         this._props.gridTitle = context.parameters.gridTitle?.raw || "Matriz SPOT";
         this._props.rows = this.parseTableData(context.parameters.tableData?.raw);
-        //this._props.user365Users = this.parseUsuariosTable(context.parameters.usuariosEmpresa?.raw),
-       // this._props.onDiscard = this.handleOnDiscard.bind(this);
+        this._props.biddingDocuments = this.parseBiddingDocument(context.parameters.biddingDocuments?.raw);
+        //this._props.selectedDocument = context.parameters.selectedDocument?.raw ?? "";
+        
 
         this.render();
     }
@@ -73,7 +90,8 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
         return {
             datosDescarte: this._discardData,
             correoValidacion: this._validationEmail,
-            cerrarOferta: this._closeData
+            cerrarOferta: this._closeData,
+            selectedDocument: this._selectedDocument
         };
     }
 
@@ -86,6 +104,21 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
             React.createElement(SPOTAppGrid, this._props),
             this._container
         );
+    }
+
+    private parseBiddingDocument(bids: string | null | undefined): IBiddingDocument[] {
+        if (!bids) return [];
+        try {
+            const parsed = JSON.parse(bids);
+            if (!Array.isArray(parsed)) return [];
+            return parsed.map((item: { eventID: string; eventName: string; }) => ({
+                value: String(item.eventID),
+                label: String(item.eventID)
+            }));
+        } catch (e) {
+            console.error("Error parsing biddingDocuments data", e);
+            return [];
+        }
     }
 
     private parseUsuariosTable(raw: string | null | undefined): userTableRow[] {
