@@ -2,7 +2,7 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SPOTApp as SPOTAppGrid, ISPOTAppProps } from "./components/SPOTApp";
-import { TableDataRow, MaterialSupplier, userTableRow, IBiddingDocument } from "./interfaces";
+import { TableDataRow, MaterialSupplier,  IBiddingDocument } from "./interfaces";
 
 // Import existing prompt functions
 import { showDiscardPrompt } from "./discardPrompt";
@@ -33,7 +33,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
         this._notifyOutputChanged = notifyOutputChanged;
         this._container.style.height = "100%";
         this._container.style.overflow = "hidden";  
-        (window as any).pcfContext = context;
+        //(window as any).pcfContext = context;
         
        // this._selectedDocument = context.parameters.selectedDocument?.raw ?? undefined;
 
@@ -121,20 +121,6 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
         }
     }
 
-    private parseUsuariosTable(raw: string | null | undefined): userTableRow[] {
-        if (!raw) return [];
-        try {
-            const parsed = JSON.parse(raw);
-            const retur = parsed.map((u: userTableRow) => ({
-                DisplayName: u.DisplayName,
-                Mail: u.Mail
-            }));
-            return retur;
-        } catch (e) {
-            console.error("Error parsing usuarios table data", e);
-            return [];
-        }
-    }
 
     private parseTableData(raw: string | null | undefined): TableDataRow[] {
         if (!raw) return [];
@@ -206,8 +192,11 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
             mimeType:String(supplier.mimeType ?? ""),
             onValidation: Boolean(supplier.onValidation ?? false),
             validationStatus: String(supplier.validationStatus ?? ""),
+            validationComment: String(supplier.validationComment ?? ""),
+            validationAlert: Boolean(supplier.validationAlert ?? false),
             attachmentValueID: String(supplier.attachmentValueID ?? ""),
-            attachmentFileName: String(supplier.attachmentFileName ?? "")
+            attachmentFileName: String(supplier.attachmentFileName ?? ""),
+            totalBidds: Number(supplier.totalBidds) || 0
         };
     }
 }

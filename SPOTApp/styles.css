@@ -13,10 +13,11 @@
 /* --- App Container --- */
 .spot-app {
     width: 100%;
-    height: 100%; /* Obliga al componente a usar el alto que le des en Power Apps */
+    height: 100%;  /*Obliga al componente a usar el alto que le des en Power Apps */
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Evita que la pantalla completa se rompa */
+    overflow: visible;  /* hidden;  Evita que la pantalla completa se rompa */
+   
     box-sizing: border-box;
 }
 
@@ -38,7 +39,7 @@
 .spot-user { color: #666666; }
 
 /* --- Sections --- */
-.spot-card, .spot-filters, .spot-legend, .spot-matrix { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.spot-card, .spot-filters, .spot-legend, .spot-matrix { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 8px; }
 
 /* --- Header Card & Stats --- */
 .spot-card { display: flex; flex-direction: column; gap: 18px; }
@@ -93,6 +94,7 @@
    /* margin-top: 12px;*/
     background: #ffffff;
     border-radius: 12px;
+    padding-top: 0 !important;
 }
 
 /* Estructura simétrica exacta para el encabezado y las filas */
@@ -574,30 +576,53 @@
     justify-content: flex-end;
 }
 
-.spot-header-selector {
-    background-color: white;
-    color: #374151;
-    font-weight: 600;
-    font-size: 0.875rem;
-    padding: 6px 16px;
-    padding-right: 40px;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    border: 1px solid transparent;
-    cursor: pointer;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>');
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1.25em;
+.spot-control-group {
+    display: flex;
+    align-items: center;
+    gap: 16px; /* Espaciado perfecto entre el botón y el select */
+}
+/* Contenedor del Select para añadir una flecha personalizada moderna */
+.spot-select-wrapper {
+    position: relative;
+    display: inline-block;
 }
 
+.spot-select-wrapper::after {
+    content: "▼";
+    font-size: 10px;
+    color: #909399;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* Evita que bloquee el click del select */
+}
+
+/* El Selector Moderno */
+.spot-header-selector {
+    appearance: none; /* Elimina el diseño por defecto del sistema operativo */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    padding: 8px 36px 8px 12px; /* Espacio extra a la derecha para la flecha */
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+    background-color: #ffffff;
+    border: 1px solid #dcdfe6;
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 180px;
+    transition: all 0.2s ease;
+}
+
+/* Estados Interactivos */
 .spot-header-selector:hover {
-    border-color: #D1D5DB;
+    border-color: #c0c4cc;
 }
 
 .spot-header-selector:focus {
     outline: none;
+    border-color: #409eff; /* Azul moderno de enfoque */
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }

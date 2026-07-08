@@ -24,8 +24,11 @@ export interface MaterialSupplier {
     mimeType:string;
     onValidation:boolean;
 	validationStatus:string;
+    validationComment: string;
+    validationAlert: boolean;
     attachmentValueID:string;
     attachmentFileName:string;
+    totalBidds: number;
     
     //discardReasons: string[]  | null;
    // discardObservations: string | null;
@@ -45,10 +48,7 @@ export interface TableDataRow {
     agreementDetails: string | null;
 }
 
-export interface userTableRow {
-    DisplayName: string;
-    Mail: string;
-}
+
 
 export interface TableStats {
     totalSuppliers: number;
@@ -77,10 +77,19 @@ export interface DiscardPromptResult {
 }
 
 export interface validationsPromptResult {
-    id: number;
-    materialName: string;
+    //id: number;
+    //materialName: string;
     //rutSupplier: string;
     email: string;
+    eventID:string;
+    selectedFichas: selectedFicha[];
+}
+
+export interface selectedFicha {
+    selected:boolean;
+    materialNumber:string;
+    materialName:string;
+
 }
 
 export interface CloseBiddingResult {

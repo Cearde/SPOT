@@ -1,7 +1,8 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { TableDataRow, MaterialSupplier, TableStats, userTableRow, IBiddingDocument } from "../interfaces";
+import { TableDataRow, MaterialSupplier, TableStats,  IBiddingDocument } from "../interfaces";
 import {showCloseBiddingPrompt} from "../closePrompt"
+import { showValidationsPrompt } from "../validationsPrompt";
 
 export interface ISPOTAppProps {
     gridTitle: string;
@@ -23,6 +24,7 @@ interface IUniqueSupplier {
     PER: string;
     AR: string;
     hasOTIF: boolean;
+    totalBidds: number;
 }
 
 export const SPOTApp: React.FC<ISPOTAppProps> = ({ 
@@ -39,6 +41,8 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
     const [uniqueSuppliers, setUniqueSuppliers] = useState<IUniqueSupplier[]>([]);
     const [documentsList, setBiddingDocumentsList] = useState<IBiddingDocument[]>([]);
     const [selectedDoc, setSelectedDoc] = useState<string>(""); // Start with empty
+    const [showValidationButton, setShowValidationButton] = useState<boolean>(false);
+
 
     useEffect(() => {
         const suppliers = getUniqueSupplierRuts(rows);
@@ -88,7 +92,8 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                         PEP: supplier.PEP, 
                         PER: supplier.PER, 
                         AR: supplier.AR,
-                        hasOTIF: supplier.hasOTIF
+                        hasOTIF: supplier.hasOTIF,
+                        totalBidds : supplier.totalBidds
                     });
                 }
             });
@@ -110,6 +115,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
         }
     };
 
+    
     const toggleFilter = (rut: string) => {
         const newFilters = new Set(filterActive);
         if (newFilters.has(rut)) {
@@ -132,6 +138,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
     };
     const handleDocChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const newValue = event.target.value;
+        setShowValidationButton(true);
         setSelectedDoc(newValue);
         if (onDocumentChange) {
             onDocumentChange(newValue);
@@ -165,22 +172,29 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                     </h1>
                 </div>
                 <div className="spot-header-right">
-                    <select 
-                        id="docSelector" 
-                        value={selectedDoc}
-                        onChange={handleDocChange}
-                        className="spot-header-selector"
-                    >
-                        {documentsList.length === 0 ? (
-                            <option value="">Sin documentos</option>
-                        ) : (
-                            documentsList.map((doc) => (
-                                <option key={doc.value} value={doc.value}>
-                                    {doc.label}
-                                </option>
-                            ))
-                        )}
-                    </select>
+                    <div className="spot-control-group">
+                         
+                        <button className="spot-btn" onClick={handleClosed}>Cerrar licitación</button>
+                         
+                        <div className="spot-select-wrapper">
+                            <select 
+                                id="docSelector" 
+                                value={selectedDoc}
+                                onChange={handleDocChange}
+                                className="spot-header-selector"
+                            >
+                                {documentsList.length === 0 ? (
+                                    <option value="">Sin documentos</option>
+                                ) : (
+                                    documentsList.map((doc) => (
+                                        <option key={doc.value} value={doc.value}>
+                                            {doc.label}
+                                        </option>
+                                    ))
+                                )}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -193,13 +207,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                     <StatBox label="Materiales totales" value={stats.totalMaterials.toString()} />
                     <StatBox label="Materiales sin oferta" value={stats.materialsWithoutOffer.toString()} modifier="warning" />
                 </div>
-                <div className="spot-actions">
-                    <select><option>Menor precio unitario</option></select>
-                    <div className="spot-buttons">
-                        <button className="spot-btn">Descargar informe</button>
-                        <button className="spot-btn primary" onClick={handleClosed}>Cerrar licitación</button>
-                    </div>
-                </div>
+                
             </section>
 
             <section className="spot-filters">
@@ -217,29 +225,34 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                 </div>
             </section>
 
-            <Legend />
+            <Legend selectedDoc={selectedDoc} offers={rows} onValidation={onValidation} />
 
             <section className="spot-matrix">
                 <div className="spot-matrix-header">
                     <div className="spot-matrix-header-cell">Material</div>
                     {activeSuppliersList.map(supplier => (
                         <div key={supplier.rut} className="spot-matrix-header-cell">
-                            <div className="spot-supplier-name">{supplier.name}</div>
-                            <div className="spot-pep-per-ar">
-                                {supplier.PEP.toLowerCase() === 'x' && <div className="spot-pep-box">PEP</div>}
-                                {supplier.PER.toLowerCase() === 'x' && <div className="spot-per-box">PER</div>}
-                                {supplier.AR.toLowerCase() === 'x' && <div className="spot-ar-box">AR</div>}
-                            </div>
-                            <div className="spot-supplier-rut">{supplier.rut}
-                                {supplier.hasOTIF ? (
-                                    <span className="spot-otif-indicator" title="Proveedor con OTIF existente"> ⚠️ Existe OTIF</span>
-                                ):""
-                                }
+                            <div style={{ height: '80%' }}>
+                                <div className="spot-supplier-name">{supplier.name}</div>
+                                <div className="spot-pep-per-ar">
+                                    {supplier.PEP.toLowerCase() === 'x' && <div className="spot-pep-box">PEP</div>}
+                                    {supplier.PER.toLowerCase() === 'x' && <div className="spot-per-box">PER</div>}
+                                    {supplier.AR.toLowerCase() === 'x' && <div className="spot-ar-box">AR</div>}
+                                </div>
+                                <div className="spot-supplier-rut">{supplier.rut}
+                                    {supplier.hasOTIF ? (
+                                        <span className="spot-otif-indicator" title="Proveedor con OTIF existente"> ⚠️ Existe OTIF</span>
+                                    ):""
+                                    }
 
+                                </div>
+                                <div className="spot-supplier-metrics">
+                                    
+                                    <div className="spot-metric-box">{supplier.avgDeliveryDays}d prom.</div>
+                                </div>
                             </div>
-                            <div className="spot-supplier-metrics">
-                                <div className="spot-metric-box">5/8</div>
-                                <div className="spot-metric-box">{supplier.avgDeliveryDays}d prom.</div>
+                            <div style={{ height: '20%' }}>
+                                <div className="spot-supplier-name">Total de la Oferta: {supplier.totalBidds}</div>
                             </div>
                         </div>
                     ))}
@@ -272,7 +285,49 @@ const StatBox: React.FC<{ label: string; value: string; modifier?: string }> = (
     </div>
 );
 
-const Legend: React.FC = () => (
+
+
+
+const Legend: React.FC<{selectedDoc: string; offers: TableDataRow[]; onValidation: (res: string) => void }> = ({ selectedDoc, offers , onValidation }) => {
+
+    const getMaterial = (offers: TableDataRow[]): MaterialSupplier[] => {
+        const materials: MaterialSupplier[] = [];
+
+        // Recorremos cada fila de material en la licitación
+        offers.forEach((row) => {
+            // Verificamos de forma segura que la propiedad suppliers exista y sea un arreglo
+            if (row.suppliers && Array.isArray(row.suppliers)) {
+                // Recorremos cada proveedor dentro de ese material y lo agregamos al arreglo plano
+                row.suppliers.forEach((supplier) => {
+                    materials.push(supplier);
+                });
+            }
+        });
+
+        return materials;
+    };
+    
+    const handleValidation = async () => {
+    // Aquí puedes implementar la lógica para manejar la validación de fichas
+    console.log("Validar fichas técnicas");
+
+    try {
+          //  const res = offer.ruleOut 
+                ///? await window.showDiscardPrompt(materialName, offer.rutSupplier, offer, offer.ruleOutReason, offer.ruleOutObservations)
+            const res = await showValidationsPrompt(offers, selectedDoc);//getMaterial(offers));
+        
+        if (res) {
+            onValidation(JSON.stringify(res));
+        }
+    } catch (err) {
+        console.warn("Descarte/Reincorporación cancelada:", err);
+    }
+
+
+    };
+    return(
+
+    
     <section className="spot-legend">
         <strong>LEYENDA:</strong>
         <span className="spot-chip best"> </span> <span>Mejor precio (1°)</span>
@@ -285,8 +340,13 @@ const Legend: React.FC = () => (
         <div className="spot-per-box">PER</div> <span>PER</span>
         <div className="spot-pep-box">PEP</div> <span>PEP</span>
         <div className="spot-ar-box">AR</div> <span>AR</span>
+
+
+        <button className="spot-btn" onClick={handleValidation}>validar Fichas</button>
+
     </section>
-);
+
+)};
 
 const MatrixRow: React.FC<{ 
     row: TableDataRow; 
@@ -350,18 +410,7 @@ const OfferCell: React.FC<{
     const priceHom = offer.price * (1 + offer.incotermPerc / 100);
     const percHome = offer.price > 0 ? ((priceHom - offer.price) / offer.price) * 100 : 0;
 
-    // SOLUCIÓN CON ASYNC/AWAIT: Desaparece el error del .then()
-    const handleValidations= async () => {
-        try {
-            const res = await window.showValidationsPrompt(materialName, offer.rutSupplier, offer);
-         
-            if (res && res.email) {
-                onValidation(JSON.stringify(res));
-            }
-        } catch (err) {
-            console.warn("Validación cancelada o fallida:", err);
-        }
-    };
+
 
     // SOLUCIÓN CON ASYNC/AWAIT: Código plano, seguro y mucho más legible
     const handleDiscard = async () => {
@@ -398,21 +447,14 @@ const OfferCell: React.FC<{
             {/* ... Tu JSX se mantiene exactamente igual abajo ... */}
             <div className="spot-metric-box">{offer.esMasBarato || "-"}°</div>
            
-            {offer.esMasBarato === 1 && !offer.ruleOut  && offer.validationStatus.toLowerCase() !== "aprobado" && 
-                 <button className="spot-btn-ver" onClick={handleDetail}>🔍</button>
+            {offer.attachmentValueID && !offer.ruleOut && 
+                <button className="spot-btn-ver" onClick={handleDetail}>🔍</button>
+            }
+            {!offer.attachmentValueID &&
+                <div className={classBid}>SIN FICHA</div>
             }
 
-            {offer.esMasBarato === 1 && !offer.ruleOut  && offer.validationStatus.toLowerCase() !== "aprobado" && 
-            offer.validationStatus.toLowerCase()==="2" &&
-                <button className="spot-btn-aprobar" onClick={handleValidations}>📄</button>
-            }
-            {offer.validationStatus && 
-               <div className={classBid}> Ficha técnica:
-                            {offer.validationStatus.toLowerCase() === "aprobado" ? " Aprobada ✅" :
-                            offer.validationStatus.toLowerCase() === "rechazado" ? " Rechazada ❌" :
-                            " En Espera ⏳"}
-                </div>
-            }
+         
             
             <div className={`spot-supplier-price ${isBest ? 'spot-supplier-price-best' : isSecond ? 'spot-supplier-price-second' : ''} 
                 ${offer.ruleOut ? 'spot-supplier-price-ruleOut' : ''}`}>
