@@ -21,7 +21,7 @@ export function showDiscardPrompt(
         modal.className = "spot-modal";
         modal.innerHTML = `
             <div class="spot-modal-overlay"></div>
-            <div class="spot-modal-content">
+            <div class="spot-modal-content spot-discard-content">
                 <h3 class="spot-modal-title">${offer.ruleOut ? "Reincomporar Oferta" : "Descartar Oferta"}</h3>
                 <p><strong>Material:</strong> ${materialName}</p>
                 <p><strong>Proveedor:</strong> ${offer.supplierName} (${rutSupplier})</p>
@@ -42,9 +42,12 @@ export function showDiscardPrompt(
                     <label><input type="checkbox" name="discardReason" value="OTIF existente" ${initialReasons.includes("OTIF existente") ? "checked" : ""}> OTIF existente</label>
                 </div>
 
-                <p><strong>Observaciones (opcional):</strong></p>
-                <textarea id="spot-discard-observations" class="spot-textarea" rows="4" placeholder="Escribe aquí tus observaciones...">${initialObservations || ""}</textarea>
-                
+                <p><strong>Observaciones:</strong></p>
+                <textarea id="spot-discard-observations" class="spot-textarea" rows="4" maxlength="250" placeholder="Escribe aquí tus observaciones...">${initialObservations || ""}</textarea>
+                <div style="text-align: right; font-size: 11px; color: #666; margin-top: 4px;">
+                    <span id="spot-char-count">${(initialObservations || "").length}</span>/250
+                </div>
+
                 <div class="spot-modal-actions">
                     <button id="spot-discard-cancel" class="spot-btn">Cancelar</button>
                     <button id="spot-discard-confirm" class="spot-btn primary">${offer.ruleOut ? "Reincorporar" : "Descartar"}</button>
@@ -58,6 +61,17 @@ export function showDiscardPrompt(
         const cancelButton = modal.querySelector("#spot-discard-cancel") as HTMLButtonElement;
         const overlay = modal.querySelector(".spot-modal-overlay") as HTMLDivElement;
         const observationsTextArea = modal.querySelector("#spot-discard-observations") as HTMLTextAreaElement;
+
+        // 1. Obtener las referencias de los elementos
+        const textarea = document.getElementById("spot-discard-observations") as HTMLTextAreaElement;
+        const charCount = document.getElementById("spot-char-count");
+
+        // 2. Escuchar el evento 'input' para actualizar el contador en tiempo real
+        if (textarea && charCount) {
+            textarea.addEventListener("input", () => {
+                charCount.textContent = textarea.value.length.toString();
+            });
+        }
 
         const cleanup = () => {
             modal.remove();

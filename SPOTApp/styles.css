@@ -39,7 +39,37 @@
 .spot-user { color: #666666; }
 
 /* --- Sections --- */
-.spot-card, .spot-filters, .spot-legend, .spot-matrix { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 8px; }
+.spot-title, .spot-card, .spot-filters, .spot-legend, .spot-matrix { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 8px; }
+
+.spot-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+    padding: 12px 8px;
+}
+
+.spot-title strong {
+    display: block;
+    width: 100%;
+}
+
+.spot-title strong:nth-child(1) {
+    order: 1;
+}
+
+.spot-title strong:nth-child(2) {
+    order: 2;
+}
+/*
+.spot-title strong:nth-child(1) {
+    order: 3;
+    font-size: 12px;
+    color: #666666;
+    font-weight: 600;
+}*/
 
 /* --- Header Card & Stats --- */
 .spot-card { display: flex; flex-direction: column; gap: 18px; }
@@ -63,7 +93,11 @@
 .spot-btn.primary:hover { background: #d4520c; }
 .spot-btn.descartar { background: #c13832; color: white; width: 100%; margin-top: auto; }
 .spot-btn.reincorporar { background: #f4aa00; color: white; width: 100%; margin-top: auto; }
-
+.spot-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none; /* Evita que responda a clicks en la interfaz */
+}
 /* --- Filters --- */
 .spot-filters h3 { margin: 0 0 10px 0; font-size: 16px; }
 .spot-filters small { color: #888; font-weight: normal; margin-left: 8px; }
@@ -125,15 +159,56 @@
     justify-content: center;
 }
 
+.spot-supplier-header-cell {
+    align-items: stretch;
+    text-align: left;
+    gap: 10px;
+}
+
+.spot-supplier-header-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.spot-supplier-header-row,
+.spot-supplier-header-total {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.spot-supplier-header-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.68);
+    flex: 0 0 auto;
+}
+
+.spot-supplier-header-value {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    width: auto;
+    min-width: 0;
+}
+
 .spot-supplier-name { font-weight: 700; font-size: 14px; }
 .spot-supplier-rut { font-size: 12px; color: rgba(255,255,255,0.8); }
-.spot-supplier-metrics { display: flex; gap: 5px; margin-top: 5px; justify-content: center; }
+.spot-supplier-metrics { display: flex; gap: 5px; margin-top: 0; justify-content: flex-start; }
 .spot-metric-box { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 6px; font-size: 10px; color: white; }
 
 .spot-pep-box { background: #106470; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
 .spot-per-box { background: #E55302; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
 .spot-ar-box { background: #000000; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
-.spot-pep-per-ar { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+.spot-no-marks{  color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+.spot-pep-per-ar { display: flex; gap: 4px; justify-content: flex-start; margin-top: 0; }
 
 /* Configuración de Filas */
 .spot-matrix-row {
@@ -302,6 +377,39 @@
 .spot-textarea { width: 100% !important; padding: 10px !important; border: 1px solid #d8d2cc !important; border-radius: 8px !important; font-family: inherit !important; font-size: 14px !important; resize: vertical !important; box-sizing: border-box !important; }
 
 .spot-detail-footer, .spot-modal-actions { display: flex !important; justify-content: flex-end !important; gap: 10px !important; margin-top: 20px !important; }
+
+/* Compact spacing only for discard prompt */
+.spot-discard-content {
+    gap: 10px !important;
+    padding: 18px !important;
+}
+
+.spot-discard-content .spot-modal-title {
+    margin-bottom: 4px !important;
+}
+
+.spot-discard-content p {
+    margin: 2px 0 !important;
+    line-height: 1.3 !important;
+}
+
+.spot-discard-content .spot-offer-details-box {
+    padding: 10px !important;
+    margin-bottom: 4px !important;
+}
+
+.spot-discard-content .spot-offer-details-box h4 {
+    margin-bottom: 6px !important;
+}
+
+.spot-discard-content .spot-checkbox-group {
+    gap: 5px !important;
+    margin-top: 4px !important;
+}
+
+.spot-discard-content .spot-modal-actions {
+    margin-top: 10px !important;
+}
 
 /* --- Responsive & Responsive Grids --- */
 @media (max-width: 1024px) {

@@ -21,7 +21,8 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
     private _discardData: string | undefined;
     private _validationEmail: string | undefined;
     private _closeData: string | undefined;
-    private _selectedDocument: string | undefined;
+    //private _statusDocument: string | undefined;
+    private _detailUpdate: string | undefined;
 
     public init(
         context: ComponentFramework.Context<IInputs>,
@@ -39,38 +40,52 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
 
         this._props = {
             gridTitle: context.parameters.gridTitle?.raw || "Matriz SPOT",
+            statusDocument: context.parameters.statusDocument?.raw || "",
             rows: this.parseTableData(context.parameters.tableData?.raw),
             onDiscard: (result: string) => {
                 this._discardData = result;
+                this._detailUpdate = "";
                 this._validationEmail = "";
                 this._closeData = "";
-                this._selectedDocument = "";
+               // this._statusDocument = "";
                 this._notifyOutputChanged();
             },
             onValidation: (email: string) => {
                 this._validationEmail = email;
-                this._selectedDocument = "";
+               // this._statusDocument = "";
                 this._closeData = "";
-                this._discardData = "";
-                this._selectedDocument = "";
+                this._discardData = ""; 
+                this._detailUpdate = "";
                 this._notifyOutputChanged();
             },
             onClose:(result: string) => {
                 this._closeData = result;
-                this._selectedDocument = "";
+              //  this._statusDocument = "";
+                this._discardData = "";
+                this._validationEmail = "";
+                this._detailUpdate = "";
+                this._notifyOutputChanged();
+            },
+            onDetailUpdate:(result: string) =>{
+                
+                this._detailUpdate = result;
+                this._closeData = "";
+                //this._statusDocument = "";
                 this._discardData = "";
                 this._validationEmail = "";
                 this._notifyOutputChanged();
+
             },
             biddingDocuments: this.parseBiddingDocument(context.parameters.biddingDocuments?.raw),
             //selectedDocument: this._selectedDocument,
-            onDocumentChange: (docId: string) => {
-                this._selectedDocument = docId;
+           /* onDocumentChange: (status: string) => {
+                this._statusDocument = status;
                 this._closeData = "";
                 this._discardData = "";
-                this._validationEmail = "";
+                this._validationEmail = "";              
+                this._detailUpdate = "";
                 this._notifyOutputChanged();
-            }
+            }*/
         };
 
         this.render();
@@ -91,7 +106,8 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
             datosDescarte: this._discardData,
             correoValidacion: this._validationEmail,
             cerrarOferta: this._closeData,
-            selectedDocument: this._selectedDocument
+            //statusDocument: this._statusDocument,
+            updateDetail: this._detailUpdate
         };
     }
 
@@ -167,6 +183,8 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
     private normalizeSupplier(supplier: Record<string, unknown>): MaterialSupplier | null {
         if (!supplier || typeof supplier !== "object") return null;
         return {
+            eventID: String(supplier.eventID ?? ""),
+            requisitionId: String(supplier.requisitionId ?? ""),
             rutSupplier: String(supplier.rutSupplier ?? ""),
             PEP: String(supplier.PEP ?? ""),
             PER: String(supplier.PER ?? ""),
@@ -184,7 +202,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
             ruleOutObservations: String(supplier.ruleOutObservations ?? "") || null,
             id: Number(supplier.id ?? 0),
             hasADD: Boolean(supplier.hasADD),
-            hasOTIF: Boolean(supplier.hasOTIF),
+            hasOTIF: Number(supplier.hasOTIF ?? 0),
             resultProcessAI: String(supplier.resultProcessAI ?? ""),
             confidenceRating: Number(supplier.confidenceRating) || 0,
             summaryJustification: String(supplier.summaryJustification ?? ""),
@@ -196,7 +214,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
             validationAlert: Boolean(supplier.validationAlert ?? false),
             attachmentValueID: String(supplier.attachmentValueID ?? ""),
             attachmentFileName: String(supplier.attachmentFileName ?? ""),
-            totalBidds: Number(supplier.totalBidds) || 0
+           // totalBidds: Number(supplier.totalBidds) || 0
         };
     }
 }

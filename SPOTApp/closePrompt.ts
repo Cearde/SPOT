@@ -1,4 +1,4 @@
-import { CloseBiddingResult } from "./interfaces";
+import { CloseBiddingDataJson, CloseBiddingResult } from "./interfaces";
 
 /**
  * Muestra un modal interactivo para confirmar el cierre de una licitación.
@@ -7,8 +7,9 @@ import { CloseBiddingResult } from "./interfaces";
  * @param biddingId Identificador único o código de la licitación.
  */
 export function showCloseBiddingPrompt(
+    eventID: string,
     biddingName: string,
-    biddingId: string
+    dataJson: CloseBiddingDataJson
 ): Promise<CloseBiddingResult | null> {
     return new Promise((resolve) => {
         // 1. Crear el contenedor del fondo oscuro (Overlay)
@@ -64,7 +65,7 @@ export function showCloseBiddingPrompt(
                     ⚠️ Confirmación de Cierre de Licitación
                 </h2>
                 <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">
-                    Licitación: ${biddingName} (ID: ${biddingId})
+                    Licitación: ${biddingName} (ID: ${eventID})
                 </p>
             </div>
 
@@ -74,10 +75,10 @@ export function showCloseBiddingPrompt(
                 </p>
             </div>
 
-            <!-- Sección opcional: Enviar informe generado -->
+            <!-- Sección obligatoria: Enviar informe generado -->
             <div style="margin-bottom: 24px; background-color: #f8fafc; border: 1px solid #f1f5f9; padding: 14px; border-radius: 8px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; letter-spacing: 0.05em;">
-                    Enviar informe consolidado a (Opcional):
+                    Enviar informe consolidado a:
                 </label>
                 <input type="text" class="spot-close-email-input" 
                     placeholder="ejemplo@empresa.com" 
@@ -99,9 +100,9 @@ export function showCloseBiddingPrompt(
         // 4. Lógica de validación del correo (si es que se ingresó uno)
         const validateAndResolve = (decision: boolean) => {
             if (!decision) {
-                // Si la decisión es Cancelar, resolvemos de inmediato
-                resolve({ decision: false, email: "" });
+                // Si la decisión es Cancelar, solo cerramos el modal
                 document.body.removeChild(overlay);
+                resolve(null);
                 return;
             }
 
@@ -112,10 +113,10 @@ export function showCloseBiddingPrompt(
 
             const emailValue = emailInput.value.trim();
 
-            // Si el correo no es obligatorio y está vacío, la decisión es correcta y el correo va vacío
             if (emailValue === "") {
-                resolve({ decision: true, email: "" });
-                document.body.removeChild(overlay);
+                errorDiv.textContent = "Debes ingresar un correo electrónico.";
+                errorDiv.style.display = "block";
+                emailInput.style.borderColor = "#dc2626";
                 return;
             }
 
@@ -133,7 +134,15 @@ export function showCloseBiddingPrompt(
             errorDiv.style.display = "none";
             emailInput.style.borderColor = "#cbd5e1";
 
-            resolve({ decision: true, email: emailValue });
+            resolve(
+                {
+                    decision: true,
+                    email: emailValue,
+                    dataJson :dataJson,
+                    eventID,
+                    bindinName: biddingName
+                }
+            );
             document.body.removeChild(overlay);
         };
 

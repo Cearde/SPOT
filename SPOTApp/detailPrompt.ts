@@ -1,257 +1,271 @@
-import { MaterialSupplier, validationsPromptResult } from "./interfaces";
+import { MaterialSupplier } from "./interfaces";
 
 /**
  * Muestra un modal detallado de la Ficha Técnica analizada por la IA.
- * Permite descargar el documento y enviarlo a una lista de validadores.
+ * Permite descargar el documento, ver los estados y modificarlos directamente.
  * * @param materialName Nombre del material/producto.
  * @param materialNumber Código o número identificador del material.
  * @param offer Objeto con la información de la oferta y del análisis de IA.
- * @param onSend Callback opcional que se ejecuta al presionar "Enviar" con la cadena de correos validados.
+ * @returns Promesa que se resuelve con el objeto modificado o null si se cancela.
  */
 export function showDetailPrompt(
     materialName: string, 
     materialNumber: string, 
-    offer: MaterialSupplier,
-   // onSend?: (emails: string) => void
-): Promise<validationsPromptResult | null> {
+    offer: MaterialSupplier
+): Promise<{    id: number,
+                validationStatus: string; 
+                validationComment: string; 
+                validationAlert: boolean, 
+                eventID: string, 
+                requisitionId: string, 
+                rutSupplier: string,
+                materialNumber:string } | null> {
     return new Promise((resolve) => {
-    // 1. Crear el contenedor del fondo oscuro (Overlay)
-    const overlay = document.createElement("div");
-    overlay.className = "spot-prompt-overlay";
+        // 1. Crear el contenedor del fondo oscuro (Overlay)
+        const overlay = document.createElement("div");
+        overlay.className = "spot-prompt-overlay";
 
-    // 2. Crear la tarjeta blanca principal (Modal)
-    const card = document.createElement("div");
-    card.className = "spot-detail-card-simple";
+        // 2. Crear la tarjeta blanca principal (Modal)
+        const card = document.createElement("div");
+        card.className = "spot-detail-card-simple";
 
-    // 3. Procesar datos dinámicos del análisis de la Inteligencia Artificial
-    const docTypeRaw = (offer.resultProcessAI || "DESCONOCIDO").toUpperCase();
-    const confidenceRaw = offer.confidenceRating || 0;
-    const justification = offer.summaryJustification || "No se proporcionó una justificación detallada por parte de la IA.";
+        // 3. Obtener valores iniciales seguros
+        const docTypeRaw = (offer.resultProcessAI || "DESCONOCIDO").toUpperCase();
+        const justification = offer.summaryJustification || "No se proporcionó una justificación detallada por parte de la IA.";
+        const confidenceRaw = offer.confidenceRating || 0;
+        const percentStr = confidenceRaw <= 1 
+            ? `${Math.round(confidenceRaw * 100)}%` 
+            : `${Math.round(confidenceRaw)}%`;
 
-    // Convertir el factor de confianza a un string porcentual legible
-    const percentStr = confidenceRaw <= 1 
-        ? `${Math.round(confidenceRaw * 100)}%` 
-        : `${Math.round(confidenceRaw)}%`;
+        // Determinar estado de selección inicial mapeándolo de forma segura
+        const currentStatus = (offer.validationStatus || "").trim().toLowerCase();
+        let initialSelectValue = "Indeterminado";
+        if (currentStatus === "aprobado" || currentStatus === "aprobada") {
+            initialSelectValue = "Aprobado";
+        } else if (currentStatus === "rechazado" || currentStatus === "rechazada") {
+            initialSelectValue = "Rechazado";
+        }
 
-    // Configurar los estilos dinámicos del banner de estado según el veredicto de la IA
-    let bannerBgColor = "#f1f5f9";
-    let statusText = "Sin Análisis";
-    let badgeHTML = `<span class="spot-status-badge" style="background-color: #cbd5e1; color: #334155;">N/A</span>`;
-    let statusIcon = "📄";
+        const initialComment = offer.validationComment || offer.ruleOutReason || "";
+        const initialAlert = typeof offer.validationAlert === "boolean" 
+            ? offer.validationAlert 
+            : !!offer.hasADD;
 
-    if (docTypeRaw === "FICHA_TECNICA" || docTypeRaw === "FICHA_TÉCNICA") {
-        //bannerBgColor = "#f0fdf4"; // Fondo verde claro
-        statusText = "Ficha Técnica Validada por IA";
-       // badgeHTML = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
-       // statusIcon = "🟢";
-    } else if (docTypeRaw === "OFERTA_COMERCIAL") {
-        //bannerBgColor = "#fffbeb"; // Fondo amarillo claro
-        statusText = "Oferta Comercial Detectada";
-        //badgeHTML = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
-        //statusIcon = "⚠️";
-    } else if (docTypeRaw === "DESCARTADO" || docTypeRaw === "RECHAZADO") {
-        //bannerBgColor = "#fff1f2"; // Fondo rojo claro
-        statusText = "Documento Descartado";
-        //badgeHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
-       // statusIcon = "🚫";
-    }
-
-    if(confidenceRaw >= 0.8) {
-        badgeHTML = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
-        bannerBgColor = "#f0fdf4"; // Fondo verde claro
-        statusIcon = "✅";
-    }else if (confidenceRaw >= 0.5 && confidenceRaw < 0.8) {
-        badgeHTML = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
-        bannerBgColor = "#fffbeb"; // Fondo amarillo claro
-        statusIcon = "⚠️";
-    } else {
-        badgeHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
-        bannerBgColor = "#fff1f2"; // Fondo rojo claro
-        statusIcon = "❌";
-    }
-    // Evaluación segura de la condición de validación
-    const isApproved = (offer.validationStatus || "").toLowerCase() === "aprobado";
-    const showEmailSection = false;// !offer.onValidation && !isApproved;
-
-    // 4. Inyectar la estructura HTML interna del modal (incluyendo el campo de correos)
-    card.innerHTML = `
-        <div class="spot-detail-header-simple">
-            <h2>Ficha Técnica IA</h2>
-            <p>${materialName} · Cód. ${materialNumber}</p>
-        </div>
-
-        <!-- Banner dinámico del estado del análisis -->
-        <div class="spot-ai-status-banner" style="background-color: ${bannerBgColor};">
-            <span style="font-size: 24px; line-height: 1;">${statusIcon}</span>
-            <div style="flex-grow: 1;">
-                <div style="font-size: 14px; font-weight: 700; color: #0f172a;">${statusText}</div>
-                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Proveedor: ${offer.supplierName || "No identificado"}</div>
+        // 4. Inyectar la estructura HTML interna del modal
+        card.innerHTML = `
+            <div class="spot-detail-header-simple">
+                <h2>Ficha Técnica IA — Gestión de Calificación</h2>
+                <p>${materialName} · Cód. ${materialNumber}</p>
             </div>
-            ${badgeHTML}
-        </div>
 
-        <!-- Sección informativa del análisis de la IA -->
-        <div class="spot-ai-info-section">
-            <div class="spot-ai-info-title">Justificación del Análisis</div>
-            <p class="spot-ai-info-content">${justification}</p>
-        </div>
+            <!-- Banner dinámico del estado del análisis (Se actualizará mediante JS reactivo) -->
+            <div id="spot-ai-status-banner-el" class="spot-ai-status-banner">
+                <span id="spot-banner-icon" style="font-size: 24px; line-height: 1;">📄</span>
+                <div style="flex-grow: 1;">
+                    <div id="spot-banner-title" style="font-size: 14px; font-weight: 700; color: #0f172a;">Cargando...</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Proveedor: ${offer.supplierName || "No identificado"}</div>
+                </div>
+                <div id="spot-banner-badge"></div>
+            </div>
 
-       
-        <!-- Botones de acción del Modal -->
-        <div class="spot-detail-actions-layout">
-            <button class="spot-btn-close-simple">Cerrar</button>
-            <button class="spot-btn-download">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                </svg>
-                Descargar
-            </button>
-            
-        </div>
-    `;
+            <!-- Sección informativa del análisis de la IA -->
+            <div class="spot-ai-info-section">
+                <div class="spot-ai-info-title">Justificación del Análisis de IA</div>
+                <p class="spot-ai-info-content">${justification}</p>
+            </div>
 
-    // 5. Lógica de decodificación y descarga del documento en formato Base64
-    const handleDownload = () => {
-        const base64 = offer.fileBase64 //|| offer.documentBase64 || offer.base64;
+            <!-- FORMULARIO DE EDICIÓN DE LA VALIDACIÓN -->
+            <div class="spot-ai-info-section" style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                <div class="spot-ai-info-title" style="margin-bottom: 12px; color: #0f172a;">Formulario de Calificación</div>
+                
+                <!-- 1. Selector de Estado de Validación -->
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; letter-spacing: 0.05em;">
+                        Estado de Validación:
+                    </label>
+                    <select class="spot-validation-status-select" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; color: #1e293b; background-color: #ffffff; outline: none; cursor: pointer; box-sizing: border-box;">
+                        <option value="Aprobado" ${initialSelectValue === "Aprobado" ? "selected" : ""}>Aprobado ✅</option>
+                        <option value="Rechazado" ${initialSelectValue === "Rechazado" ? "selected" : ""}>Rechazado ❌</option>
+                        <option value="Indeterminado" ${initialSelectValue === "Indeterminado" ? "selected" : ""}>Indeterminado ⚠️</option>
+                    </select>
+                </div>
+
+                <!-- 2. Textarea para Comentarios -->
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; letter-spacing: 0.05em;">
+                        Comentario de Validación:
+                    </label>
+                    <textarea class="spot-validation-comment-textarea" rows="3" placeholder="Escribe aquí los motivos, detalles u observaciones sobre la ficha..." 
+                        style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box; resize: vertical;">${initialComment}</textarea>
+                </div>
+
+                <!-- 3. Checkbox para validación de Alerta -->
+                <div style="display: flex; align-items: center; gap: 8px; background-color: #f8fafc; padding: 10px; border: 1px solid #f1f5f9; border-radius: 8px;">
+                    <input type="checkbox" id="spot-validation-alert-cb" class="spot-validation-alert-checkbox" 
+                        style="width: 16px; height: 16px; cursor: pointer; margin: 0;" ${initialAlert ? "checked" : ""} />
+                    <label for="spot-validation-alert-cb" style="font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; user-select: none; margin: 0;">
+                        Establecer Alerta Activa para este Item
+                    </label>
+                </div>
+            </div>
+
+            <!-- Botones de acción del Modal -->
+            <div class="spot-detail-actions-layout" style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 12px;">
+                <button class="spot-btn-close-simple">Cancelar</button>
+                <button class="spot-btn-download" style="margin-right: auto;">
+                    
+                    🔍 Ver Ficha
+                </button>
+                <button class="spot-btn-save-validations" style="background-color: #106470; color: #ffffff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background-color 0.15s ease;">
+                    💾 Guardar Cambios
+                </button>
+            </div>
+        `;
+
+        // Elementos interactivos del DOM
+        const statusBanner = card.querySelector("#spot-ai-status-banner-el") as HTMLDivElement;
+        const bannerIcon = card.querySelector("#spot-banner-icon") as HTMLSpanElement;
+        const bannerTitle = card.querySelector("#spot-banner-title") as HTMLDivElement;
+        const bannerBadge = card.querySelector("#spot-banner-badge") as HTMLDivElement;
         
-        if (!base64) {
-            alert("No se encontró el contenido del documento en Base64 para descargar.");
-            return;
-        }
+        const statusSelect = card.querySelector(".spot-validation-status-select") as HTMLSelectElement;
+        const commentTextarea = card.querySelector(".spot-validation-comment-textarea") as HTMLTextAreaElement;
+        const alertCheckbox = card.querySelector(".spot-validation-alert-checkbox") as HTMLInputElement;
 
-        try {
-            // Remueve cualquier prefijo de Data URI en caso de que esté presente
-            const cleanBase64 = base64.replace(/^data:[^;]+;base64,/, "");
-            
-            // Convertir la cadena Base64 en datos binarios decodificados
-            const byteCharacters = atob(cleanBase64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            
-            // Asignar el tipo MIME predeterminado para documentos PDF
-            let mimeType = "application/pdf";
-            let extension = "pdf";
-            
-            // Detectar si el Base64 corresponde a una imagen para asignar su formato correcto
-            if (base64.startsWith("data:image/png")) {
-                mimeType = "image/png";
-                extension = "png";
-            } else if (base64.startsWith("data:image/jpeg") || base64.startsWith("data:image/jpg")) {
-                mimeType = "image/jpeg";
-                extension = "jpg";
+        // 5. Función para actualizar reactivamente la apariencia del banner superior
+        const updateBannerStyle = (docTypeRaw: string, confidenceRaw: number) => {
+            if (!statusBanner || !bannerIcon || !bannerTitle || !bannerBadge) return;
+
+            if (docTypeRaw === "FICHA_TECNICA" || docTypeRaw === "FICHA_TÉCNICA") {
+                //statusBanner.style.backgroundColor = "#f0fdf4"; // Fondo verde claro
+               // bannerIcon.textContent = "✅";
+                bannerTitle.textContent = "Ficha Técnica Validada por IA";
+               // bannerBadge.innerHTML = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
+            } else if (docTypeRaw === "OFERTA_COMERCIAL") {
+                //statusBanner.style.backgroundColor = "#fff1f2"; // Fondo rojo claro
+                //bannerIcon.textContent = "❌";
+                bannerTitle.textContent = "Oferta Comercial Detectada";
+               // bannerBadge.innerHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
+            } else {
+               // statusBanner.style.backgroundColor = "#fffbeb"; // Fondo amarillo claro
+               // bannerIcon.textContent = "⚠️";
+                bannerTitle.textContent = "Calificación Indeterminada";
+                //bannerBadge.innerHTML = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
             }
 
-            const blob = new Blob([byteArray], { type: mimeType });
-            const blobUrl = URL.createObjectURL(blob);
+            if(confidenceRaw >= 0.8) {
+                 bannerBadge.innerHTML  = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
+                statusBanner.style.backgroundColor = "#f0fdf4"; // Fondo verde claro
+                bannerIcon.textContent = "✅";
+            }else if (confidenceRaw >= 0.5 && confidenceRaw < 0.8) {
+                 bannerBadge.innerHTML  = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
+                statusBanner.style.backgroundColor = "#fffbeb"; // Fondo amarillo claro
+                bannerIcon.textContent = "⚠️";
+            } else {
+                bannerBadge.innerHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
+                statusBanner.style.backgroundColor = "#fff1f2"; // Fondo rojo claro
+                bannerIcon.textContent = "❌";
+            }
+
+        };
+
+        // Escuchar el evento de cambio para redibujar el banner en tiempo real
+       /* statusSelect?.addEventListener("change", (e) => {
+            const target = e.target as HTMLSelectElement;
+            updateBannerStyle(target.value);
+        });
+*/
+        // Inicializar por primera vez el estilo del banner
+        updateBannerStyle(docTypeRaw, confidenceRaw);
+
+        // 6. Lógica de decodificación y descarga del documento en formato Base64
+        const handleDownload = () => {
+            const base64 = offer.fileBase64;
             
-            // Generar un nombre limpio para el archivo a descargar
-            const sanitizedDocName = docTypeRaw.replace(/\s+/g, "_");
-            const fileName = `Doc_${sanitizedDocName}_${materialNumber}.${extension}`;
+            if (!base64) {
+                alert("No se encontró el contenido del documento en Base64 para descargar.");
+                return;
+            }
 
-            // Crear y gatillar un enlace invisible en el navegador para iniciar la descarga
-            const downloadLink = document.createElement("a");
-            downloadLink.href = blobUrl;
-            downloadLink.download = fileName;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            
-            // Limpiar memoria
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(blobUrl);
+            try {
+                const cleanBase64 = base64.replace(/^data:[^;]+;base64,/, "");
+                const byteCharacters = atob(cleanBase64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                
+                let mimeType = "application/pdf";
+                let extension = "pdf";
+                
+                if (base64.startsWith("data:image/png")) {
+                    mimeType = "image/png";
+                    extension = "png";
+                } else if (base64.startsWith("data:image/jpeg") || base64.startsWith("data:image/jpg")) {
+                    mimeType = "image/jpeg";
+                    extension = "jpg";
+                }
+
+                const blob = new Blob([byteArray], { type: mimeType });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                const sanitizedDocName = docTypeRaw.replace(/\s+/g, "_");
+                const fileName = `Doc_${sanitizedDocName}_${materialNumber}.${extension}`;
+
+                const downloadLink = document.createElement("a");
+                downloadLink.href = blobUrl;
+                downloadLink.download = fileName;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(blobUrl);
+            } catch (error) {
+                console.error("Error al decodificar y descargar el Base64:", error);
+                alert("Ocurrió un error al intentar procesar y descargar el archivo.");
+            }
+        };
+
+        // 7. Eventos de confirmación y cierre del prompt
+        const closeBtn = card.querySelector(".spot-btn-close-simple");
+        closeBtn?.addEventListener("click", () => {
             resolve(null);
-        } catch (error) {
-            console.error("Error al decodificar y descargar el Base64:", error);
-            alert("Ocurrió un error al intentar procesar y descargar el archivo.");
-        }
-
-
-    };
-
-    // 6. Lógica para procesar, validar y enviar los correos
-    const handleSendEmails = () => {
-        const emailInput = card.querySelector(".spot-email-input") as HTMLInputElement;
-        const errorDiv = card.querySelector(".spot-email-error") as HTMLDivElement;
-
-        if (!emailInput || !errorDiv) return;
-
-        const rawValue = emailInput.value;
-
-        if (!rawValue || !rawValue.trim()) {
-            errorDiv.textContent = "Por favor, ingresa al menos un correo electrónico.";
-            errorDiv.style.display = "block";
-            emailInput.style.borderColor = "#dc2626";
-            return;
-        }
-
-        // Dividir por ";" y filtrar correos vacíos
-        const emailList = rawValue.split(";").map(email => email.trim()).filter(Boolean);
-        
-        // Expresión regular para validar formato de email estándar
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const invalidEmails = emailList.filter(email => !emailRegex.test(email));
-
-        if (invalidEmails.length > 0) {
-            errorDiv.textContent = `Formato inválido en: ${invalidEmails.join(", ")}`;
-            errorDiv.style.display = "block";
-            emailInput.style.borderColor = "#dc2626";
-            return;
-        }
-
-        // Si todo es correcto, limpiar errores visuales
-        errorDiv.style.display = "none";
-        emailInput.style.borderColor = "#cbd5e1";
-
-        // Asignar el valor verificado al campo de salida 'correoValidacion' en el objeto de la oferta (Output)
-       // (offer as any).correoValidacion = rawValue;
-
-        // Ejecutar callback si existe y cerrar el modal
-        if (rawValue) {
-            //onSend(rawValue);
-            //resolve({ id: offer.id, materialName,  email: rawValue });
-        }
-        else
-        {
-            resolve(null);
-        }
-        document.body.removeChild(overlay);
-
-
-    };
-
-    // 7. Asignación de manejadores de eventos (Events)
-    const closeBtn = card.querySelector(".spot-btn-close-simple");
-    closeBtn?.addEventListener("click", () => {
-        resolve(null);
-        document.body.removeChild(overlay);
-    });
-
-    const downloadBtn = card.querySelector(".spot-btn-download");
-    downloadBtn?.addEventListener("click", handleDownload);
-
-    const sendBtn = card.querySelector(".spot-btn-send");
-    sendBtn?.addEventListener("click", handleSendEmails);
-
-    // Limpiar errores inline al escribir en el input
-    const emailInput = card.querySelector(".spot-email-input") as HTMLInputElement;
-    emailInput?.addEventListener("input", () => {
-        const errorDiv = card.querySelector(".spot-email-error") as HTMLDivElement;
-        if (errorDiv) {
-            errorDiv.style.display = "none";
-            emailInput.style.borderColor = "#cbd5e1";
-        }
-    });
-
-    // Permitir cerrar el modal si se hace clic fuera de la tarjeta de contenido
-    overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) {
             document.body.removeChild(overlay);
-        }
-    });
+        });
 
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
-});
+        const downloadBtn = card.querySelector(".spot-btn-download");
+        downloadBtn?.addEventListener("click", handleDownload);
+
+        const saveBtn = card.querySelector(".spot-btn-save-validations");
+        saveBtn?.addEventListener("click", () => {
+            const finalStatus = statusSelect.value;
+            const finalComment = commentTextarea.value.trim();
+            const finalAlert = alertCheckbox.checked;
+
+            // Retornar los datos modificados al proceso de React para actualizar los estados
+            resolve({
+                id: offer.id,
+                validationStatus: finalStatus,
+                validationComment: finalComment,
+                validationAlert: finalAlert,
+                eventID: offer.eventID || "",
+                requisitionId: offer.requisitionId || "",
+                rutSupplier : offer.rutSupplier || "",
+                materialNumber : materialNumber,
+            });
+            document.body.removeChild(overlay);
+        });
+
+        // Permitir cerrar el modal si se hace clic fuera de la tarjeta de contenido
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) {
+                resolve(null);
+                document.body.removeChild(overlay);
+            }
+        });
+
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+    });
 }

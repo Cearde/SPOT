@@ -1,14 +1,15 @@
 [
     {
-        "requisitionId": "0084189040",
         "materialName": "AGUJA 2,0X150MM SYNTHES 29220",
-        "materialNumber": "00000012808",
+        "materialNumber": "000000000000012808",
         "quantityAmount": 1,
         "quantityUnitCode": "EA        ",
+        "requisitionId": "0084189040",
         "lastPurchasePrice": 17.40,
         "lastPurchaseDate": "01\/02\/2026",
         "suppliers": [
             {
+                "eventID": "Doc2208522422",
                 "rutSupplier": "19707560-0",
                 "supplierName": "RFQ 1",
                 "brandModel": "CHINO",
@@ -21,16 +22,20 @@
                 "esMasBarato": 1,
                 "incoterm": "EBC",
                 "incotermPerc": 11.00,
+                "ruleOut": false,
                 "id": 169,
                 "hasADD": 0,
-                "hasOTIF": 1,
+                "hasOTIF": 10.375000,
                 "resultProcessAI": "FICHA_TECNICA",
-                "confidenceRating": 0.9,
-                "summaryJustification": "Resultado de la evaluación",
+                "confidenceRating": 0.95,
+                "summaryJustification": "El documento contiene detalles técnicos sobre dimensiones y materiales de juntas de expansión.",
                 "onValidation": false,
-                "validationStatus": "Aprobado"
+                "validationStatus": "Aprobado",
+                "validationAlert": false,
+                "validationComment": ""
             },
             {
+                "eventID": "Doc2208522422",
                 "rutSupplier": "25574060-1",
                 "supplierName": "RFQ 2",
                 "brandModel": "Johnson",
@@ -43,31 +48,36 @@
                 "esMasBarato": 2,
                 "incoterm": "EBC",
                 "incotermPerc": 11.00,
-                "ruleOut": true,
+                "ruleOut": false,
                 "ruleOutReason": [
-                    "Precio fuera de rango",
-                    "Plazo de entrega excesivo"
+                    "Precio fuera de rango"
                 ],
-                "ruleOutObservations": "Rechazado",
+                "ruleOutObservations": "se descarta por validación tecnica",
                 "id": 170,
                 "hasADD": 0,
-                "hasOTIF": 0,
                 "resultProcessAI": "FICHA_TECNICA",
-                "confidenceRating": 0.5,
-                "summaryJustification": "test"
+                "confidenceRating": 0.95,
+                "summaryJustification": "Contiene especificaciones técnicas detalladas sobre productos médicos como agujas de Kirschner y alambres de cerclaje, así como indicaciones y técnicas de uso.",
+                "onValidation": false,
+                "validationStatus": "Rechazado",
+                "validationAlert": false,
+                "validationComment": "",
+                "attachmentValueID": "NXA8AIoDHX0sQF0",
+                "attachmentFileName": "FT-JOHNSON_20260608195721.546_XA.pdf"
             }
         ]
     },
     {
-        "requisitionId": "0084189040",
         "materialName": "MASCARILLA QUIRURG C\/ELASTICO DESECHABLE",
-        "materialNumber": "00000012805",
+        "materialNumber": "000000000000012805",
         "quantityAmount": 1,
         "quantityUnitCode": "EA        ",
+        "requisitionId": "0084189040",
         "lastPurchasePrice": 0.02,
         "lastPurchaseDate": "01\/03\/2026",
         "suppliers": [
             {
+                "eventID": "Doc2208522422",
                 "rutSupplier": "19707560-0",
                 "supplierName": "RFQ 1",
                 "brandModel": "GHUANZOU",
@@ -82,14 +92,19 @@
                 "incotermPerc": 11.00,
                 "id": 171,
                 "hasADD": 1,
-                "hasOTIF": 1,
+                "hasOTIF": 10.375000,
                 "resultProcessAI": "FICHA_TECNICA",
-                "confidenceRating": 0.3,
-                "summaryJustification": "tes2",
-                "onValidation": true,
-                "validationStatus": "Rechazado"
+                "confidenceRating": 0.95,
+                "summaryJustification": "El documento incluye diagramas técnicos, materiales, dimensiones y especificaciones del producto ofrecido.",
+                "onValidation": false,
+                "validationStatus": "asdasd",
+                "validationAlert": true,
+                "validationComment": "asdasd",
+                "attachmentValueID": "NXA8AIoDHYLqIHe",
+                "attachmentFileName": "SPF7222 Ficha tecnica Juntas Exp material 1597269_1597285.pdf"
             },
             {
+                "eventID": "Doc2208522422",
                 "rutSupplier": "25574060-1",
                 "supplierName": "RFQ 2",
                 "brandModel": "MUNNICH",
@@ -102,12 +117,18 @@
                 "esMasBarato": 1,
                 "incoterm": "EBC",
                 "incotermPerc": 11.00,
+                "ruleOut": false,
                 "id": 172,
                 "hasADD": 1,
-                "hasOTIF": 0,
                 "resultProcessAI": "FICHA_TECNICA",
-                "confidenceRating": 0.7,
-                "summaryJustification": "tes3"
+                "confidenceRating": 0.95,
+                "summaryJustification": "El documento describe especificaciones técnicas del producto, incluyendo dimensiones, materiales, certificaciones y características de uso.",
+                "onValidation": false,
+                "validationStatus": "Aprobado",
+                "validationAlert": true,
+                "validationComment": "ANOMALÍA: Se marcó \"Cumple\" pero se ingresó una observación de rechazo: asdasdsd",
+                "attachmentValueID": "NXA8AIoDHX39I!8",
+                "attachmentFileName": "FT-MUNNICH_20260608195603.196_XM.pdf"
             }
         ]
     }

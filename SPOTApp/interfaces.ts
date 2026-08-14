@@ -1,4 +1,6 @@
 export interface MaterialSupplier {
+    eventID: string;
+    requisitionId:string;
     rutSupplier: string;
     supplierName: string; // Added supplierName
     avgDeliveryDays: string;
@@ -16,7 +18,7 @@ export interface MaterialSupplier {
     ruleOutObservations: string | null;
     id: number;
     hasADD: boolean;
-    hasOTIF: boolean;
+    hasOTIF: number;
     resultProcessAI: string;
     confidenceRating: number;
     summaryJustification: string;
@@ -28,7 +30,7 @@ export interface MaterialSupplier {
     validationAlert: boolean;
     attachmentValueID:string;
     attachmentFileName:string;
-    totalBidds: number;
+   // totalBidds: number;
     
     //discardReasons: string[]  | null;
    // discardObservations: string | null;
@@ -92,9 +94,53 @@ export interface selectedFicha {
 
 }
 
+export interface CloseBiddingDataSupplier {
+    rut: string;
+    name: string;
+}
+
+/*export interface CloseBiddingDataOffer {
+    price: number;
+    unit: string;
+    incoterm: string;
+}*/
+export interface CloseBiddingDataOffer {
+    // Identificación de la SOLPED y Material
+    requisitionId: string;                   // SOLPED
+    materialName: string;                    // Nombre Material
+    materialNumber: string;                  // Código Material
+    quantityAmount: number | string;         // Cantidad Solicitada
+    quantityUnitCode: string;                // UDM (Unidad de Medida)
+
+    // Detalle de la Oferta del Proveedor
+    price: number;                           // Precio Unitario
+    totalHomologatedPrice: number;           // Precio total homologado
+    estimatedUnitPriceVariation: number;     // Variación precio unitario estimado
+    deliveryDays: number;                    // Días corridos de entrega
+    incoterm: string;                        // Incoterms
+    brandModel: string;                      // Marca / modelo
+    
+    // Mantenemos la propiedad unit previa por retrocompatibilidad
+    unit: string;
+    isBestOffer:boolean;
+}
+export interface CloseBiddingDataMaterial {
+    materialNumber: string;
+    materialName: string;
+    offers: Record<string, CloseBiddingDataOffer>;
+}
+
+export interface CloseBiddingDataJson {
+    suppliers: CloseBiddingDataSupplier[];
+    materials: CloseBiddingDataMaterial[];
+}
+
 export interface CloseBiddingResult {
     decision: boolean;  // true si presiona "Aceptar", false si presiona "Cancelar"
     email: string;      // Correo electrónico ingresado (cadena vacía si no se especificó)
+    dataJson: CloseBiddingDataJson;
+    eventID: string;
+    bindinName : string
 }
 
 export interface IBiddingDocument {

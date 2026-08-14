@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { TableDataRow, MaterialSupplier, TableStats,  IBiddingDocument } from "../interfaces";
+import { TableDataRow, MaterialSupplier, TableStats, IBiddingDocument, CloseBiddingDataJson,CloseBiddingDataOffer } from "../interfaces";
 import {showCloseBiddingPrompt} from "../closePrompt"
 import { showValidationsPrompt } from "../validationsPrompt";
 
@@ -10,9 +10,10 @@ export interface ISPOTAppProps {
     onDiscard: (result: string) => void;
     onValidation: (email: string) => void;
     onClose: (result: string) => void;
+    onDetailUpdate: (result: string) => void;
 
     biddingDocuments: IBiddingDocument[];
-    //selectedDocument?: string;
+    statusDocument ?: string;
     onDocumentChange?: (documentId: string) => void;
 }
 
@@ -23,7 +24,7 @@ interface IUniqueSupplier {
     PEP: string;
     PER: string;
     AR: string;
-    hasOTIF: boolean;
+    hasOTIF: number;
     totalBidds: number;
 }
 
@@ -34,20 +35,23 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
     onValidation,
     onClose,    
     biddingDocuments,
-    //selectedDocument//,
+    statusDocument,
+    onDetailUpdate,
     onDocumentChange
 }) => {
     const [filterActive, setFilterActive] = useState<Set<string>>(new Set());
     const [uniqueSuppliers, setUniqueSuppliers] = useState<IUniqueSupplier[]>([]);
+    const [hasAttach, setHasAttach] = useState<boolean>(false); // Start with false
     const [documentsList, setBiddingDocumentsList] = useState<IBiddingDocument[]>([]);
-    const [selectedDoc, setSelectedDoc] = useState<string>(""); // Start with empty
-    const [showValidationButton, setShowValidationButton] = useState<boolean>(false);
+    const [selectedDoc, setSelectedDoc] = useState<string>(""); // Start with empty 
+  //  const [showValidationButton, setShowValidationButton] = useState<boolean>(false);
 
 
     useEffect(() => {
         const suppliers = getUniqueSupplierRuts(rows);
         setUniqueSuppliers(suppliers);
         setFilterActive(new Set(suppliers.map(s => s.rut)));
+        setHasAttach(hasAnyAttachment(rows));
     }, [rows]);
 
     useEffect(() => {
@@ -77,35 +81,156 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
         }
     }, [biddingDocuments, selectedDoc]);
 
+    const hasAnyAttachment = (data: TableDataRow[]): boolean => {
+        return data.some(row => 
+            row.suppliers?.some(supplier => 
+                !supplier.ruleOut &&
+                Boolean(supplier.attachmentValueID && supplier.attachmentValueID.trim() !== "")
+            )
+        );
+    };
+
+    // Uso:
+    //const tieneAdjuntos = hasAnyAttachment(rows);
 
     const getUniqueSupplierRuts = (dataRows: TableDataRow[]): IUniqueSupplier[] => {
+        const safeRows = dataRows || [];
         const seen = new Set<string>();
         const unique: IUniqueSupplier[] = [];
-        dataRows.forEach((row) => {
-            row.suppliers.forEach((supplier) => {
-                if (supplier.rutSupplier && !seen.has(supplier.rutSupplier)) {
-                    seen.add(supplier.rutSupplier);
-                    unique.push({ 
-                        rut: supplier.rutSupplier, 
-                        name: supplier.supplierName, 
-                        avgDeliveryDays: supplier.avgDeliveryDays, 
-                        PEP: supplier.PEP, 
-                        PER: supplier.PER, 
-                        AR: supplier.AR,
-                        hasOTIF: supplier.hasOTIF,
-                        totalBidds : supplier.totalBidds
-                    });
-                }
-            });
+        const priceSumMap: Record<string, number> = {};
+
+        safeRows.forEach((row) => {
+            if (row && row.suppliers && Array.isArray(row.suppliers)) {
+                row.suppliers.forEach((supplier) => {
+                    if (supplier && supplier.rutSupplier) {
+                        const rut = supplier.rutSupplier;
+                        const isDiscarded = !!supplier.ruleOut;
+                        const offerPrice = typeof supplier.price === "number" ? supplier.price : 0;
+
+                        if (!isDiscarded) {
+                            priceSumMap[rut] = (priceSumMap[rut] || 0) + offerPrice;
+                        }
+                    }
+                });
+            }
+        });
+
+        safeRows.forEach((row) => {
+            if (row && row.suppliers && Array.isArray(row.suppliers)) {
+                row.suppliers.forEach((supplier) => {
+                    if (supplier && supplier.rutSupplier && !seen.has(supplier.rutSupplier)) {
+                        seen.add(supplier.rutSupplier);
+                        const rut = supplier.rutSupplier;
+                        
+                        unique.push({ 
+                            rut: rut, 
+                            name: supplier.supplierName || "", 
+                            avgDeliveryDays: supplier.avgDeliveryDays || "0", 
+                            PEP: supplier.PEP || "", 
+                            PER: supplier.PER || "", 
+                            AR: supplier.AR || "",
+                            hasOTIF: supplier.hasOTIF || 0,
+                            totalBidds: priceSumMap[rut] || 0
+                        });
+                    }
+                });
+            }
         });
         return unique;
     };
 
+    const buildCloseBiddingDataJson = (dataRows: TableDataRow[]): CloseBiddingDataJson => {
+        const suppliersMap = new Map<string, { rut: string; name: string }>();
+        
+        const materials = (dataRows || []).map((row) => {
+            const offers: Record<string, CloseBiddingDataOffer> = {};
+
+            // Convertir la cantidad solicitada a número para cálculos de precio total
+            const parsedQuantity = typeof row.quantityAmount === "number" 
+                ? row.quantityAmount 
+                : parseFloat(row.quantityAmount) || 0;
+
+            (row.suppliers || []).forEach((supplier) => {
+                if (!supplier.rutSupplier) {
+                    return;
+                }
+
+                if (!suppliersMap.has(supplier.rutSupplier)) {
+                    suppliersMap.set(supplier.rutSupplier, {
+                        rut: supplier.rutSupplier,
+                        name: supplier.supplierName || ""
+                    });
+                }
+
+                const unitPrice = typeof supplier.price === "number" ? supplier.price : 0;
+                const lastPrice = typeof row.lastPurchasePrice === "number" ? row.lastPurchasePrice : 0;
+
+                offers[supplier.rutSupplier] = {
+                    // Datos del Material / SOLPED (vienen de TableDataRow)
+                    requisitionId: row.requisitionId || supplier.requisitionId || "",
+                    materialName: row.materialName || "",
+                    materialNumber: row.materialNumber || "",
+                    quantityAmount: row.quantityAmount ?? 0,
+                    quantityUnitCode: row.quantityUnitCode || "",
+                    unit: row.quantityUnitCode || "", // Duplicado/Alias para no romper scripts previos
+
+                    // Datos de la Oferta (vienen de MaterialSupplier)
+                    price: unitPrice,
+                    totalHomologatedPrice: unitPrice * parsedQuantity,
+                    estimatedUnitPriceVariation: lastPrice > 0 ? unitPrice - lastPrice : 0,
+                    deliveryDays: supplier.deliveryDays ?? 0,
+                    incoterm: supplier.incoterm || "",
+                    brandModel: supplier.brandModel || "",
+                    isBestOffer: supplier.esMasBarato === 1 ? true : false
+                };
+            });
+
+            return {
+                materialNumber: row.materialNumber || "",
+                materialName: row.materialName || "",
+                offers
+            };
+        });
+
+        return {
+            suppliers: Array.from(suppliersMap.values()),
+            materials
+        };
+    };
+
+    const handleValidation = async () => {
+    // Aquí puedes implementar la lógica para manejar la validación de fichas
+    console.log("Validar fichas técnicas");
+
+    try {
+          // Filtrar solo los materiales (filas) que tengan al menos una oferta con adjunto válido
+            const filteredOffers = rows.filter(row => 
+                row.suppliers && 
+                Array.isArray(row.suppliers) &&
+                row.suppliers.some(supplier => 
+                    !supplier.ruleOut && 
+                    Boolean(supplier.attachmentValueID && supplier.attachmentValueID.trim() !== "")
+                )
+            );
+            const res = await showValidationsPrompt(filteredOffers, selectedDoc);//getMaterial(offers));
+        
+        if (res) {
+            onValidation(JSON.stringify(res));
+        }
+    } catch (err) {
+        console.warn("Descarte/Reincorporación cancelada:", err);
+    }
+
+
+    };
+
      const handleClosed = async () => {
         try {
-          //  const res = offer.ruleOut 
-                ///? await window.showDiscardPrompt(materialName, offer.rutSupplier, offer, offer.ruleOutReason, offer.ruleOutObservations)
-                const res = await showCloseBiddingPrompt("","");
+            const selectedDocument = documentsList.find((doc) => doc.value === selectedDoc);
+            const biddingName = gridTitle;
+            const eventID = selectedDocument?.value || selectedDoc;
+            const dataJson = buildCloseBiddingDataJson(rows);
+            const res = await showCloseBiddingPrompt(eventID, biddingName, dataJson);
             
             if (res) {
                 onClose(JSON.stringify(res));
@@ -138,7 +263,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
     };
     const handleDocChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const newValue = event.target.value;
-        setShowValidationButton(true);
+        //setShowValidationButton(true);
         setSelectedDoc(newValue);
         if (onDocumentChange) {
             onDocumentChange(newValue);
@@ -173,11 +298,31 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                 </div>
                 <div className="spot-header-right">
                     <div className="spot-control-group">
+
+                        <span 
+                        className="spot-btn-wrapper"
+                        title={!hasAttach ? "No hay fichas adjuntas para validar" : ""}
+                        >
+                            <button 
+                                className="spot-btn" 
+                                disabled={!hasAttach || statusDocument?.toLowerCase() === 'en validación' || statusDocument?.toLowerCase() === 'cerrada'} 
+                                onClick={handleValidation}
+                            >
+                                {statusDocument?.toLowerCase() === 'en validación' ? "Fichas EN VALIDACIÓN" : "Validar Fichas"} 
+                            </button>
+                        </span>
                          
-                        <button className="spot-btn" onClick={handleClosed}>Cerrar licitación</button>
+                       
+                        <button 
+                            className="spot-btn" 
+                            onClick={handleClosed}
+                            disabled={statusDocument?.toLowerCase() === 'cerrada' || statusDocument?.toLowerCase() === 'en validación'}
+                        >
+                            {statusDocument?.toLowerCase() === 'cerrada' ? "Licitación CERRADA " : "Cerrar Licitación"} 
+                        </button>
                          
-                        <div className="spot-select-wrapper">
-                            <select 
+                        { /*<div className="spot-select-wrapper">
+                           <select 
                                 id="docSelector" 
                                 value={selectedDoc}
                                 onChange={handleDocChange}
@@ -193,7 +338,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                                     ))
                                 )}
                             </select>
-                        </div>
+                        </div>*/}
                     </div>
                 </div>
             </header>
@@ -209,7 +354,10 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                 </div>
                 
             </section>
-
+            <section className="spot-title"> 
+                <strong>ID: {selectedDoc}</strong>
+                <strong>Nombre: {gridTitle}</strong>
+            </section>
             <section className="spot-filters">
                 <h3>Filtrar proveedores <small>{activeSuppliersList.length} / {uniqueSuppliers.length} visibles</small></h3>
                 <div className="spot-pills">
@@ -225,37 +373,66 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                 </div>
             </section>
 
-            <Legend selectedDoc={selectedDoc} offers={rows} onValidation={onValidation} />
+            <Legend 
+                selectedDoc={selectedDoc} 
+                offers={rows} 
+                hasAttach={hasAttach}
+                onValidation={onValidation} />
 
             <section className="spot-matrix">
                 <div className="spot-matrix-header">
                     <div className="spot-matrix-header-cell">Material</div>
-                    {activeSuppliersList.map(supplier => (
-                        <div key={supplier.rut} className="spot-matrix-header-cell">
-                            <div style={{ height: '80%' }}>
-                                <div className="spot-supplier-name">{supplier.name}</div>
-                                <div className="spot-pep-per-ar">
-                                    {supplier.PEP.toLowerCase() === 'x' && <div className="spot-pep-box">PEP</div>}
-                                    {supplier.PER.toLowerCase() === 'x' && <div className="spot-per-box">PER</div>}
-                                    {supplier.AR.toLowerCase() === 'x' && <div className="spot-ar-box">AR</div>}
-                                </div>
-                                <div className="spot-supplier-rut">{supplier.rut}
-                                    {supplier.hasOTIF ? (
-                                        <span className="spot-otif-indicator" title="Proveedor con OTIF existente"> ⚠️ Existe OTIF</span>
-                                    ):""
-                                    }
+                    {activeSuppliersList.map(supplier => {
+                        const isPEP = supplier.PEP?.toLowerCase() === 'x';
+                        const isPER = supplier.PER?.toLowerCase() === 'x';
+                        const isAR = supplier.AR?.toLowerCase() === 'x';
+                        const marks = [isAR ? 'AR' : '', isPEP ? 'PEP' : '', isPER ? 'PER' : ''].filter(Boolean);
+                        const otifText = supplier.hasOTIF > 0
+                            ? `${Number(supplier.hasOTIF).toFixed(2)} ⚠️` 
+                            : 'Sin OTIF';
 
+                        return (
+                            <div key={supplier.rut} className="spot-matrix-header-cell spot-supplier-header-cell">
+                                <div className="spot-supplier-header-list">
+                                    <div className="spot-supplier-header-row">
+                                        <span className="spot-supplier-header-label">Nombre:</span>
+                                        <span className="spot-supplier-header-value spot-supplier-name">{supplier.name}</span>
+                                    </div>
+                                    <div className="spot-supplier-header-row">
+                                        <span className="spot-supplier-header-label">RUT:</span>
+                                        <span className="spot-supplier-header-value spot-supplier-rut">{supplier.rut}</span>
+                                    </div>
+                                    <div className="spot-supplier-header-row">
+                                        <span className="spot-supplier-header-label">Marcas:</span>
+                                        <div className="spot-supplier-header-value spot-pep-per-ar">
+                                            {marks.length > 0 ? (
+                                                <>
+                                                    {isAR && <div className="spot-ar-box">AR</div>}
+                                                    {isPEP && <div className="spot-pep-box">PEP</div>}
+                                                    {isPER && <div className="spot-per-box">PER</div>}
+                                                </>
+                                            ) : (
+                                                <span className="spot-no-marks">Sin marcas</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="spot-supplier-header-row">
+                                        <span className="spot-supplier-header-label">OTIF:</span>
+                                        <span className="spot-supplier-header-value spot-supplier-rut">{otifText}</span>
+                                    </div>
+                                    <div className="spot-supplier-header-row">
+                                        <span className="spot-supplier-header-label">Entrega prom.:</span>
+                                        <span className="spot-supplier-header-value spot-supplier-rut">{supplier.avgDeliveryDays}d</span>
+                                        
+                                    </div>
                                 </div>
-                                <div className="spot-supplier-metrics">
-                                    
-                                    <div className="spot-metric-box">{supplier.avgDeliveryDays}d prom.</div>
+                                <div className="spot-supplier-header-total">
+                                    <span className="spot-supplier-header-label">Total:</span>
+                                    <span className="spot-supplier-header-value spot-supplier-name">USD {Number(supplier.totalBidds).toFixed(2)}</span>
                                 </div>
                             </div>
-                            <div style={{ height: '20%' }}>
-                                <div className="spot-supplier-name">Total de la Oferta: {supplier.totalBidds}</div>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {rows.length === 0 ? (
@@ -270,6 +447,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                             activeSuppliers={activeSuppliersList}  
                             onDiscard={onDiscard}
                             onValidation={onValidation}
+                            onDetailUpdate={onDetailUpdate}
                         />
                     ))
                 )}
@@ -288,9 +466,9 @@ const StatBox: React.FC<{ label: string; value: string; modifier?: string }> = (
 
 
 
-const Legend: React.FC<{selectedDoc: string; offers: TableDataRow[]; onValidation: (res: string) => void }> = ({ selectedDoc, offers , onValidation }) => {
+const Legend: React.FC<{selectedDoc: string; offers: TableDataRow[]; hasAttach: boolean; onValidation: (res: string) => void }> = ({ selectedDoc, offers, hasAttach, onValidation }) => {
 
-    const getMaterial = (offers: TableDataRow[]): MaterialSupplier[] => {
+    /*const getMaterial = (offers: TableDataRow[]): MaterialSupplier[] => {
         const materials: MaterialSupplier[] = [];
 
         // Recorremos cada fila de material en la licitación
@@ -305,16 +483,23 @@ const Legend: React.FC<{selectedDoc: string; offers: TableDataRow[]; onValidatio
         });
 
         return materials;
-    };
+    };*/
     
-    const handleValidation = async () => {
+    /*const handleValidation = async () => {
     // Aquí puedes implementar la lógica para manejar la validación de fichas
     console.log("Validar fichas técnicas");
 
     try {
-          //  const res = offer.ruleOut 
-                ///? await window.showDiscardPrompt(materialName, offer.rutSupplier, offer, offer.ruleOutReason, offer.ruleOutObservations)
-            const res = await showValidationsPrompt(offers, selectedDoc);//getMaterial(offers));
+          // Filtrar solo los materiales (filas) que tengan al menos una oferta con adjunto válido
+            const filteredOffers = offers.filter(row => 
+                row.suppliers && 
+                Array.isArray(row.suppliers) &&
+                row.suppliers.some(supplier => 
+                    !supplier.ruleOut && 
+                    Boolean(supplier.attachmentValueID && supplier.attachmentValueID.trim() !== "")
+                )
+            );
+            const res = await showValidationsPrompt(filteredOffers, selectedDoc);//getMaterial(offers));
         
         if (res) {
             onValidation(JSON.stringify(res));
@@ -324,7 +509,7 @@ const Legend: React.FC<{selectedDoc: string; offers: TableDataRow[]; onValidatio
     }
 
 
-    };
+    };*/
     return(
 
     
@@ -342,8 +527,18 @@ const Legend: React.FC<{selectedDoc: string; offers: TableDataRow[]; onValidatio
         <div className="spot-ar-box">AR</div> <span>AR</span>
 
 
-        <button className="spot-btn" onClick={handleValidation}>validar Fichas</button>
-
+       {/* <span 
+            className="spot-btn-wrapper"
+            title={!hasAttach ? "No hay fichas adjuntas para validar" : ""}
+            >
+            <button 
+                className="spot-btn" 
+                disabled={!hasAttach} 
+                onClick={handleValidation}
+            >
+                Validar Fichas
+            </button>
+        </span>*/}
     </section>
 
 )};
@@ -353,7 +548,8 @@ const MatrixRow: React.FC<{
     activeSuppliers: IUniqueSupplier[]; 
     onDiscard: (res: string) => void;
     onValidation: (email: string) => void;
-}> = ({ row, activeSuppliers,  onDiscard, onValidation }) => {
+    onDetailUpdate: (res: string) => void;
+}> = ({ row, activeSuppliers,  onDiscard, onValidation, onDetailUpdate }) => {
     return (
         <div className="spot-matrix-row">
             <div className="spot-material-cell">
@@ -388,6 +584,7 @@ const MatrixRow: React.FC<{
                                 materialNumber={row.materialNumber}
                                 onDiscard={onDiscard}
                                 onValidation={onValidation}
+                                onDetailUpdate={onDetailUpdate}
                             />
                         )}
                     </div>
@@ -403,7 +600,8 @@ const OfferCell: React.FC<{
     materialNumber: string;
     onDiscard: (res: string) => void;
     onValidation: (email: string) => void;
-}> = ({ offer, materialName, materialNumber, onDiscard, onValidation }) => {
+    onDetailUpdate: (res: string) => void;
+}> = ({ offer, materialName, materialNumber, onDiscard, onValidation, onDetailUpdate }) => {
     const isBest = offer.esMasBarato === 1;
     const isSecond = offer.esMasBarato === 2;
     const classBid = (isBest || isSecond) && !offer.ruleOut ? 'spot-supplier-note-best' : 'spot-supplier-note'; 
@@ -434,8 +632,8 @@ const OfferCell: React.FC<{
 
             const res = await window.showDetailPrompt(materialName, materialNumber, offer);
             
-            if (res && res.email) {
-                onValidation(JSON.stringify(res));
+            if (res ) {
+                onDetailUpdate(JSON.stringify(res));
             }
         } catch (err) {
             console.warn("Descarte/Reincorporación cancelada:", err);
@@ -448,10 +646,11 @@ const OfferCell: React.FC<{
             <div className="spot-metric-box">{offer.esMasBarato || "-"}°</div>
            
             {offer.attachmentValueID && !offer.ruleOut && 
-                <button className="spot-btn-ver" onClick={handleDetail}>🔍</button>
+                <button className="spot-btn-ver" onClick={handleDetail}>{offer.validationAlert? "⚠️🔍" : "🔍"}</button>
+                
             }
             {!offer.attachmentValueID &&
-                <div className={classBid}>SIN FICHA</div>
+                <div className={classBid}> "⚠️" SIN FICHA</div>
             }
 
          
