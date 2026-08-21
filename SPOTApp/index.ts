@@ -95,6 +95,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
         this._props.gridTitle = context.parameters.gridTitle?.raw || "Matriz SPOT";
         this._props.rows = this.parseTableData(context.parameters.tableData?.raw);
         this._props.biddingDocuments = this.parseBiddingDocument(context.parameters.biddingDocuments?.raw);
+        this._props.statusDocument = context.parameters.statusDocument?.raw || "";
         //this._props.selectedDocument = context.parameters.selectedDocument?.raw ?? "";
         
 
@@ -184,6 +185,7 @@ export class SPOTApp implements ComponentFramework.StandardControl<IInputs, IOut
         if (!supplier || typeof supplier !== "object") return null;
         return {
             eventID: String(supplier.eventID ?? ""),
+            itemId: String(supplier.itemId ?? ""),
             requisitionId: String(supplier.requisitionId ?? ""),
             rutSupplier: String(supplier.rutSupplier ?? ""),
             PEP: String(supplier.PEP ?? ""),

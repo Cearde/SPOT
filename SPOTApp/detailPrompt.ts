@@ -180,7 +180,10 @@ export function showDetailPrompt(
 
         // 6. Lógica de decodificación y descarga del documento en formato Base64
         const handleDownload = () => {
-            const base64 = offer.fileBase64;
+
+            const sharePointUrl = `https://codelcochile.sharepoint.com/teams/CompraSpotInteligente/Shared%20Documents/spotdocs/${offer.eventID}/${offer.rutSupplier}/${offer.attachmentFileName}`;
+            window.open(sharePointUrl, '_blank', 'noopener,noreferrer');
+           /* const base64 = offer.fileBase64;
             
             if (!base64) {
                 alert("No se encontró el contenido del documento en Base64 para descargar.");
@@ -224,7 +227,7 @@ export function showDetailPrompt(
             } catch (error) {
                 console.error("Error al decodificar y descargar el Base64:", error);
                 alert("Ocurrió un error al intentar procesar y descargar el archivo.");
-            }
+            }*/
         };
 
         // 7. Eventos de confirmación y cierre del prompt

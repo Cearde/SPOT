@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="SPOTApp" constructor="SPOTApp" version="0.5.8" display-name-key="SPOTApp" description-key="SPOTApp description" control-type="standard" >
+  <control namespace="SPOTApp" constructor="SPOTApp" version="0.6.5" display-name-key="SPOTApp" description-key="SPOTApp description" control-type="standard" >
     <external-service-usage enabled="false">
     </external-service-usage>
     <resources>

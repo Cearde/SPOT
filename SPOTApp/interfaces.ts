@@ -1,5 +1,6 @@
 export interface MaterialSupplier {
     eventID: string;
+    itemId: string;
     requisitionId:string;
     rutSupplier: string;
     supplierName: string; // Added supplierName
