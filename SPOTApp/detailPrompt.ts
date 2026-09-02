@@ -36,6 +36,7 @@ export function showDetailPrompt(
         const percentStr = confidenceRaw <= 1 
             ? `${Math.round(confidenceRaw * 100)}%` 
             : `${Math.round(confidenceRaw)}%`;
+        const isTechnicalSheet = docTypeRaw === "FICHA_TECNICA" || docTypeRaw === "FICHA_TÉCNICA";
 
         // Determinar estado de selección inicial mapeándolo de forma segura
         const currentStatus = (offer.validationStatus || "").trim().toLowerCase();
@@ -54,31 +55,29 @@ export function showDetailPrompt(
         // 4. Inyectar la estructura HTML interna del modal
         card.innerHTML = `
             <div class="spot-detail-header-simple">
-                <h2>Ficha Técnica IA — Gestión de Calificación</h2>
+                <h2>Detalle del Documento</h2>
                 <p>${materialName} · Cód. ${materialNumber}</p>
             </div>
 
-            <!-- Banner dinámico del estado del análisis (Se actualizará mediante JS reactivo) -->
-            <div id="spot-ai-status-banner-el" class="spot-ai-status-banner">
-                <span id="spot-banner-icon" style="font-size: 24px; line-height: 1;">📄</span>
-                <div style="flex-grow: 1;">
-                    <div id="spot-banner-title" style="font-size: 14px; font-weight: 700; color: #0f172a;">Cargando...</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Proveedor: ${offer.supplierName || "No identificado"}</div>
+            <section class="spot-ai-info-section">
+                <div class="spot-ai-info-title" style="color: #0f172a; font-size: 14px;"><h2>Resultado del análisis de IA</h2></div>
+                <p style="margin: 0 0 12px; font-size: 13px; color: #64748b;">Esta sección muestra únicamente el resultado del análisis realizado por la IA sobre el documento adjunto.</p>
+                <div id="spot-ai-status-banner-el" class="spot-ai-status-banner">
+                    <span id="spot-banner-icon" style="font-size: 24px; line-height: 1;">📄</span>
+                    <div style="flex-grow: 1;">
+                        <div id="spot-banner-title" style="font-size: 14px; font-weight: 700; color: #0f172a;">Cargando...</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Proveedor: ${offer.supplierName || "No identificado"}</div>
+                    </div>
+                    <div id="spot-banner-badge"></div>
                 </div>
-                <div id="spot-banner-badge"></div>
-            </div>
-
-            <!-- Sección informativa del análisis de la IA -->
-            <div class="spot-ai-info-section">
-                <div class="spot-ai-info-title">Justificación del Análisis de IA</div>
+                <div class="spot-ai-info-title">Justificación del análisis</div>
                 <p class="spot-ai-info-content">${justification}</p>
-            </div>
+            </section>
 
-            <!-- FORMULARIO DE EDICIÓN DE LA VALIDACIÓN -->
-            <div class="spot-ai-info-section" style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
-                <div class="spot-ai-info-title" style="margin-bottom: 12px; color: #0f172a;">Formulario de Calificación</div>
+            ${isTechnicalSheet ? `
+            <section class="spot-ai-info-section" style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                <div class="spot-ai-info-title" style="margin-bottom: 12px; color: #0f172a; font-size: 14px;"><h2>Validación de ficha técnica</h2></div>
                 
-                <!-- 1. Selector de Estado de Validación -->
                 <div style="margin-bottom: 12px;">
                     <label style="display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; letter-spacing: 0.05em;">
                         Estado de Validación:
@@ -107,18 +106,17 @@ export function showDetailPrompt(
                         Establecer Alerta Activa para este Item
                     </label>
                 </div>
-            </div>
+            </section>` : ""}
 
-            <!-- Botones de acción del Modal -->
             <div class="spot-detail-actions-layout" style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 12px;">
                 <button class="spot-btn-close-simple">Cancelar</button>
                 <button class="spot-btn-download" style="margin-right: auto;">
                     
-                    🔍 Ver Ficha
+                    🔍 Ver documento
                 </button>
-                <button class="spot-btn-save-validations" style="background-color: #106470; color: #ffffff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background-color 0.15s ease;">
+                ${isTechnicalSheet ? `<button class="spot-btn-save-validations" style="background-color: #106470; color: #ffffff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background-color 0.15s ease;">
                     💾 Guardar Cambios
-                </button>
+                </button>` : ""}
             </div>
         `;
 
@@ -139,17 +137,17 @@ export function showDetailPrompt(
             if (docTypeRaw === "FICHA_TECNICA" || docTypeRaw === "FICHA_TÉCNICA") {
                 //statusBanner.style.backgroundColor = "#f0fdf4"; // Fondo verde claro
                // bannerIcon.textContent = "✅";
-                bannerTitle.textContent = "Ficha Técnica Validada por IA";
+                bannerTitle.textContent = "Documento detectado: Ficha Técnica.";
                // bannerBadge.innerHTML = `<span class="spot-status-badge" style="background-color: #dcfce7; color: #15803d;">${percentStr} Seguro</span>`;
             } else if (docTypeRaw === "OFERTA_COMERCIAL") {
                 //statusBanner.style.backgroundColor = "#fff1f2"; // Fondo rojo claro
                 //bannerIcon.textContent = "❌";
-                bannerTitle.textContent = "Oferta Comercial Detectada";
+                bannerTitle.textContent = "Documento detectado: Oferta Comercial.";
                // bannerBadge.innerHTML = `<span class="spot-status-badge" style="background-color: #ffe4e6; color: #b91c1c;">${percentStr} Rechazo</span>`;
             } else {
                // statusBanner.style.backgroundColor = "#fffbeb"; // Fondo amarillo claro
                // bannerIcon.textContent = "⚠️";
-                bannerTitle.textContent = "Calificación Indeterminada";
+                bannerTitle.textContent = "Documento detectado: Calificación Indeterminada.";
                 //bannerBadge.innerHTML = `<span class="spot-status-badge" style="background-color: #fef3c7; color: #b45309;">${percentStr} Alerta</span>`;
             }
 
@@ -242,6 +240,8 @@ export function showDetailPrompt(
 
         const saveBtn = card.querySelector(".spot-btn-save-validations");
         saveBtn?.addEventListener("click", () => {
+            if (!statusSelect || !commentTextarea || !alertCheckbox) return;
+
             const finalStatus = statusSelect.value;
             const finalComment = commentTextarea.value.trim();
             const finalAlert = alertCheckbox.checked;

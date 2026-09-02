@@ -40,6 +40,8 @@ export function showDiscardPrompt(
                     <label><input type="checkbox" name="discardReason" value="Incoterms no aceptados" ${initialReasons.includes("Incoterms no aceptados") ? "checked" : ""}> Incoterms no aceptados</label>
                     <label><input type="checkbox" name="discardReason" value="ADD exsitentes" ${initialReasons.includes("ADD exsitentes") ? "checked" : ""}> ADD exsitentes</label>
                     <label><input type="checkbox" name="discardReason" value="OTIF existente" ${initialReasons.includes("OTIF existente") ? "checked" : ""}> OTIF existente</label>
+                    <label><input type="checkbox" name="discardReason" value="No cumple validación técnica" ${initialReasons.includes("No cumple validación técnica") ? "checked" : ""}> No cumple validación técnica</label>
+                    
                 </div>
 
                 <p><strong>Observaciones:</strong></p>

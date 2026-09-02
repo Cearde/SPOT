@@ -242,26 +242,29 @@
 .spot-supplier-cell {
     width: 220px;
     min-width: 220px;
-    padding: 38px 14px 14px 14px; /* Relleno superior para no colisionar con botones flotantes */
+    padding: 28px 14px 10px; /* Espacio para los botones flotantes */
     box-sizing: border-box;
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 4px;
     align-items: center;
     text-align: center;
     position: relative !important; /* Contexto vital para botones con position: absolute */
 }
 
 .spot-supplier-cell:last-child { border-right: none; }
+.spot-supplier-cell-best { background: #0098AA; }
 
-.spot-supplier-price { font-size: 18px; font-weight: 700; color: var(--teal); margin-bottom: 4px; }
+.spot-supplier-price { font-size: 18px; font-weight: 700; color: var(--teal); margin: 0; line-height: 1.2; }
 .spot-supplier-price-bestSecond { font-size: 18px; font-weight: 700; color: #fff; }
-.spot-supplier-price-best { background: #0098AA; border-radius: 8px; padding: 6px 8px; color: #fff; width: 90%; }
-.spot-supplier-price-second { background: var(--accent); border-radius: 8px; padding: 6px 8px; color: #fff; width: 90%; }
+.spot-supplier-price-best { color: #fff; }
 .spot-supplier-price-ruleOut { background: #f8d7da; border-radius: 8px; padding: 6px 8px; color: #8a2b2b; text-decoration: line-through; width: 90%; }
-.spot-supplier-note { color: #666; font-size: 12px; margin-top: 2px; }
-.spot-supplier-note-best { color: #fff; font-size: 12px; margin-top: 2px; }
+.spot-supplier-note { color: #666; font-size: 12px; line-height: 1.2; }
+.spot-supplier-note-best { color: #fff; font-size: 12px; line-height: 1.2; }
+.spot-supplier-cell-best .spot-metric-box { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff; }
+.spot-supplier-cell-best .spot-buttons { margin-top: auto; width: 100%; }
 .spot-no-offer { color: #a00; font-weight: 700; margin: auto; }
 
 /* Botones Absolutos dentro de su celda */
@@ -645,6 +648,7 @@
     background-color: #E35205; /* Naranja Codelco */
     width: 100%;
     height: 64px;
+    flex-shrink: 0; /* Evita que la cinta se comprima cuando la grilla tiene muchos datos */
     padding: 0 24px;
     margin-bottom: 24px;
     border-radius: 8px;

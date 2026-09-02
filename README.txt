@@ -24,7 +24,3 @@ npm run build
 #para debug
 npm start 
 
-
-git add .
-git commit -m "ultimos detalles"
-git push -u origin main 

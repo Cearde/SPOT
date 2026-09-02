@@ -100,108 +100,114 @@ class ValidationModal extends React.Component<IValidationModalProps, IValidation
     };
 
     render() {
+        const hasFichas = this.state.selectedFichas.length > 0;
+
         return React.createElement("div", { className: "spot-modal" },
             React.createElement("div", { className: "spot-modal-overlay", onClick: this.props.onCancel }),
             React.createElement("div", { className: "spot-modal-content", style: { overflow: "visible" } },
                 React.createElement("h3", { className: "spot-modal-title" }, "Enviar fichas a validación"),
-                React.createElement("p", null, "Selecciona los materiales y especifica los destinatarios para realizar la validación:"),
-                
-                // Contenedor de Documentos con Scroll y Checkboxes
-                React.createElement("div", { 
-                    className: "spot-input-group", 
-                    style: { marginTop: "15px", marginBottom: "15px" } 
-                },
-                    React.createElement("label", null, React.createElement("strong", null, "Materiales a Validar:")),
-                    React.createElement("div", {
-                        style: {
-                            marginTop: "8px",
-                            maxHeight: "150px",
-                            overflowY: "auto",
-                            border: "1px solid #d8d2cc",
-                            borderRadius: "8px",
-                            padding: "10px",
-                            backgroundColor: "#fbf8f6",
-                            boxSizing: "border-box"
-                        }
-                    },
-                        this.state.selectedFichas.map((ficha, index) => {
-                            const filename = ficha.materialName || `Documento sin nombre (${index + 1})`;
-                            const isChecked = ficha.selected;
-
-                            return React.createElement("div", {
-                                key: index,
+                !hasFichas
+                    ? React.createElement("p", null, "No hay fichas técnicas para validar.")
+                    : React.createElement(React.Fragment, null,
+                        React.createElement("p", null, "Selecciona los materiales y especifica los destinatarios para realizar la validación:"),
+                        
+                        // Contenedor de Documentos con Scroll y Checkboxes
+                        React.createElement("div", { 
+                            className: "spot-input-group", 
+                            style: { marginTop: "15px", marginBottom: "15px" } 
+                        },
+                            React.createElement("label", null, React.createElement("strong", null, "Materiales a Validar:")),
+                            React.createElement("div", {
                                 style: {
-                                    display: "flex",
-                                    alignItems: "center",
-                                    marginBottom: index === this.state.selectedFichas.length - 1 ? "0px" : "10px",
-                                    cursor: "pointer"
+                                    marginTop: "8px",
+                                    maxHeight: "150px",
+                                    overflowY: "auto",
+                                    border: "1px solid #d8d2cc",
+                                    borderRadius: "8px",
+                                    padding: "10px",
+                                    backgroundColor: "#fbf8f6",
+                                    boxSizing: "border-box"
                                 }
                             },
-                                React.createElement("input", {
-                                    type: "checkbox",
-                                    id: `chk-doc-${index}`,
-                                    checked: isChecked,
-                                    style: { 
-                                        marginRight: "10px", 
-                                        width: "16px", 
-                                        height: "16px", 
-                                        cursor: "pointer" 
-                                    },
-                                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                                        this.handleCheckboxChange(index, e.target.checked);
-                                    }
-                                }),
-                                React.createElement("label", {
-                                    htmlFor: `chk-doc-${index}`,
-                                    style: { 
-                                        fontSize: "13px", 
-                                        cursor: "pointer", 
-                                        userSelect: "none", 
-                                        color: "#3c3c3c",
-                                        fontWeight: "600"
-                                    }
-                                }, filename)
-                            );
-                        })
-                    )
-                ),
+                                this.state.selectedFichas.map((ficha, index) => {
+                                    const filename = ficha.materialName || `Documento sin nombre (${index + 1})`;
+                                    const isChecked = ficha.selected;
 
-                // Formulario para correos electrónicos
-                React.createElement("div", { className: "spot-input-group", style: { marginTop: "15px" } },
-                    React.createElement("label", null, React.createElement("strong", null, "Correos de Validadores (separados por ';'):")),
-                    React.createElement("div", { style: { marginTop: "8px" } },
-                        React.createElement("input", {
-                            type: "text",
-                            className: "spot-input",
-                            style: {
-                                width: "100%",
-                                padding: "10px",
-                                border: "1px solid #ccc",
-                                borderRadius: "4px",
-                                boxSizing: "border-box",
-                                fontSize: "14px"
-                            },
-                            placeholder: "usuario1@empresa.com; usuario2@empresa.com",
-                            value: this.state.emailsText,
-                            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                                this.setState({ emailsText: e.target.value, error: null });
-                            }
-                        })
+                                    return React.createElement("div", {
+                                        key: index,
+                                        style: {
+                                            display: "flex",
+                                            alignItems: "center",
+                                            marginBottom: index === this.state.selectedFichas.length - 1 ? "0px" : "10px",
+                                            cursor: "pointer"
+                                        }
+                                    },
+                                        React.createElement("input", {
+                                            type: "checkbox",
+                                            id: `chk-doc-${index}`,
+                                            checked: isChecked,
+                                            style: { 
+                                                marginRight: "10px", 
+                                                width: "16px", 
+                                                height: "16px", 
+                                                cursor: "pointer" 
+                                            },
+                                            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                                                this.handleCheckboxChange(index, e.target.checked);
+                                            }
+                                        }),
+                                        React.createElement("label", {
+                                            htmlFor: `chk-doc-${index}`,
+                                            style: { 
+                                                fontSize: "13px", 
+                                                cursor: "pointer", 
+                                                userSelect: "none", 
+                                                color: "#3c3c3c",
+                                                fontWeight: "600"
+                                            }
+                                        }, filename)
+                                    );
+                                })
+                            )
+                        ),
+
+                        // Formulario para correos electrónicos
+                        React.createElement("div", { className: "spot-input-group", style: { marginTop: "15px" } },
+                            React.createElement("label", null, React.createElement("strong", null, "Correos de Validadores (separados por ';'):")),
+                            React.createElement("div", { style: { marginTop: "8px" } },
+                                React.createElement("input", {
+                                    type: "text",
+                                    className: "spot-input",
+                                    style: {
+                                        width: "100%",
+                                        padding: "10px",
+                                        border: "1px solid #ccc",
+                                        borderRadius: "4px",
+                                        boxSizing: "border-box",
+                                        fontSize: "14px"
+                                    },
+                                    placeholder: "usuario1@empresa.com; usuario2@empresa.com",
+                                    value: this.state.emailsText,
+                                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                                        this.setState({ emailsText: e.target.value, error: null });
+                                    }
+                                })
+                            ),
+                            this.state.error && React.createElement("div", {
+                                style: {
+                                    color: "#a80000",
+                                    fontSize: "12px",
+                                    marginTop: "8px",
+                                    fontWeight: "bold"
+                                }
+                            }, this.state.error)
+                        )
                     ),
-                    this.state.error && React.createElement("div", {
-                        style: {
-                            color: "#a80000",
-                            fontSize: "12px",
-                            marginTop: "8px",
-                            fontWeight: "bold"
-                        }
-                    }, this.state.error)
-                ),
                 
                 // Botonera de Acción del Modal
                 React.createElement("div", { className: "spot-modal-actions", style: { marginTop: "30px" } },
-                    React.createElement("button", { className: "spot-btn", onClick: this.props.onCancel }, "Cancelar"),
-                    React.createElement("button", { className: "spot-btn primary", onClick: this.handleConfirm }, "Aceptar")
+                    React.createElement("button", { className: "spot-btn", onClick: this.props.onCancel }, hasFichas ? "Cancelar" : "Cerrar"),
+                    hasFichas && React.createElement("button", { className: "spot-btn primary", onClick: this.handleConfirm }, "Aceptar")
                 )
             )
         );

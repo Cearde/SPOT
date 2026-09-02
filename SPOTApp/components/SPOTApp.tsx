@@ -203,14 +203,17 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
     console.log("Validar fichas técnicas");
 
     try {
-          // Filtrar solo los materiales (filas) que tengan al menos una oferta con adjunto válido
+          // Filtrar solo los materiales (filas) que tengan al menos una oferta con ficha técnica válida
             const filteredOffers = rows.filter(row => 
                 row.suppliers && 
                 Array.isArray(row.suppliers) &&
-                row.suppliers.some(supplier => 
-                    !supplier.ruleOut && 
-                    Boolean(supplier.attachmentValueID && supplier.attachmentValueID.trim() !== "")
-                )
+                row.suppliers.some(supplier => {
+                    const docType = (supplier.resultProcessAI || "").trim().toUpperCase();
+                    const isTechnicalSheet = docType === "FICHA_TECNICA" || docType === "FICHA_TÉCNICA";
+                    return !supplier.ruleOut && 
+                        Boolean(supplier.attachmentValueID && supplier.attachmentValueID.trim() !== "") &&
+                        isTechnicalSheet;
+                })
             );
             const res = await showValidationsPrompt(filteredOffers, selectedDoc);//getMaterial(offers));
         
@@ -445,6 +448,7 @@ export const SPOTApp: React.FC<ISPOTAppProps> = ({
                             key={idx} 
                             row={row} 
                             activeSuppliers={activeSuppliersList}  
+                            isClosed={statusDocument?.toLowerCase() === 'cerrada'}
                             onDiscard={onDiscard}
                             onValidation={onValidation}
                             onDetailUpdate={onDetailUpdate}
@@ -546,10 +550,11 @@ const Legend: React.FC<{selectedDoc: string; offers: TableDataRow[]; hasAttach: 
 const MatrixRow: React.FC<{ 
     row: TableDataRow; 
     activeSuppliers: IUniqueSupplier[]; 
+    isClosed: boolean;
     onDiscard: (res: string) => void;
     onValidation: (email: string) => void;
     onDetailUpdate: (res: string) => void;
-}> = ({ row, activeSuppliers,  onDiscard, onValidation, onDetailUpdate }) => {
+}> = ({ row, activeSuppliers, isClosed, onDiscard, onValidation, onDetailUpdate }) => {
     return (
         <div className="spot-matrix-row">
             <div className="spot-material-cell">
@@ -564,17 +569,11 @@ const MatrixRow: React.FC<{
             </div>
             {activeSuppliers.map(supplier => {
                 const offer = row.suppliers.find(s => s.rutSupplier === supplier.rut);
-                let bgStyle = "spot-supplier-cell";
-                if(offer) {
-                    bgStyle = offer.esMasBarato ===1 && offer.ruleOut === false ? "spot-supplier-cell spot-supplier-price-best" : 
-                                    offer.esMasBarato === 2 && offer.ruleOut === false? "spot-supplier-cell spot-supplier-price-second" :
-                                         "spot-supplier-cell";
-                }
-               /* else {
-                    bgStyle = "spot-supplier-cell";
-                }*/
+                const cellClassName = offer?.esMasBarato === 1 && !offer.ruleOut
+                    ? "spot-supplier-cell spot-supplier-cell-best"
+                    : "spot-supplier-cell";
                 return ( 
-                    <div key={supplier.rut} className={bgStyle}>
+                    <div key={supplier.rut} className={cellClassName}>
                         {!offer ? (
                             <div className="spot-no-offer">Sin oferta</div>
                         ) : (
@@ -582,6 +581,7 @@ const MatrixRow: React.FC<{
                                 offer={offer} 
                                 materialName={row.materialName} 
                                 materialNumber={row.materialNumber}
+                                isClosed={isClosed}
                                 onDiscard={onDiscard}
                                 onValidation={onValidation}
                                 onDetailUpdate={onDetailUpdate}
@@ -598,13 +598,21 @@ const OfferCell: React.FC<{
     offer: MaterialSupplier; 
     materialName: string; 
     materialNumber: string;
+    isClosed: boolean;
     onDiscard: (res: string) => void;
     onValidation: (email: string) => void;
     onDetailUpdate: (res: string) => void;
-}> = ({ offer, materialName, materialNumber, onDiscard, onValidation, onDetailUpdate }) => {
+}> = ({ offer, materialName, materialNumber, isClosed, onDiscard, onValidation, onDetailUpdate }) => {
     const isBest = offer.esMasBarato === 1;
-    const isSecond = offer.esMasBarato === 2;
-    const classBid = (isBest || isSecond) && !offer.ruleOut ? 'spot-supplier-note-best' : 'spot-supplier-note'; 
+    const classBid = isBest && !offer.ruleOut ? 'spot-supplier-note-best' : 'spot-supplier-note'; 
+    const docType = (offer.resultProcessAI || "").trim().toUpperCase();
+    const isTechnicalSheet = docType === "FICHA_TECNICA" || docType === "FICHA_TÉCNICA";
+    const validationStatus = offer.validationStatus.trim().toLowerCase();
+    const validationIcon = validationStatus === "indeterminado"
+        ? "⚠️"
+        : validationStatus === "rechazado" || validationStatus === "rechazada"
+            ? "❌"
+            : "";
     const priceHom = offer.price * (1 + offer.incotermPerc / 100);
     const percHome = offer.price > 0 ? ((priceHom - offer.price) / offer.price) * 100 : 0;
 
@@ -643,19 +651,28 @@ const OfferCell: React.FC<{
     return (
         <>
             {/* ... Tu JSX se mantiene exactamente igual abajo ... */}
-            <div className="spot-metric-box">{offer.esMasBarato || "-"}°</div>
+            <div className="spot-metric-box">{offer.esMasBarato}°</div>
            
-            {offer.attachmentValueID && !offer.ruleOut && 
-                <button className="spot-btn-ver" onClick={handleDetail}>{offer.validationAlert? "⚠️🔍" : "🔍"}</button>
+            {!isClosed && isBest && offer.attachmentValueID && !offer.ruleOut && 
+                <button
+                    className="spot-btn-ver"
+                    onClick={handleDetail}
+                    title={validationIcon ? `Validación: ${offer.validationStatus}` : "Ver detalle de la ficha"}
+                >
+                    {validationIcon}🔍
+                </button>
                 
             }
             {!offer.attachmentValueID &&
                 <div className={classBid}> "⚠️" SIN FICHA</div>
             }
+            {offer.attachmentValueID && !isTechnicalSheet &&
+                <div className={classBid}>⚠️ No tiene ficha técnica</div>
+            }
 
          
             
-            <div className={`spot-supplier-price ${isBest ? 'spot-supplier-price-best' : isSecond ? 'spot-supplier-price-second' : ''} 
+            <div className={`spot-supplier-price ${isBest ? 'spot-supplier-price-best' : ''} 
                 ${offer.ruleOut ? 'spot-supplier-price-ruleOut' : ''}`}>
                 USD {offer.price.toFixed(2)}
             </div>
@@ -670,13 +687,15 @@ const OfferCell: React.FC<{
                 {offer.hasADD ? "⚠️ Existe un ADD" : ""}
             </div>
             
-            <div className="spot-buttons">
-                {!offer.ruleOut ? (
-                    <button className="spot-btn descartar" onClick={handleDiscard}>Descartar</button>
-                ) : (
-                    <button className="spot-btn reincorporar" onClick={handleDiscard}>Reincorporar</button>
-                )}
-            </div>
+            {!isClosed && (isBest || offer.ruleOut) && (
+                <div className="spot-buttons">
+                    {!offer.ruleOut ? (
+                        <button className="spot-btn descartar" onClick={handleDiscard}>Descartar</button>
+                    ) : (
+                        <button className="spot-btn reincorporar" onClick={handleDiscard}>Reincorporar</button>
+                    )}
+                </div>
+            )}
         </>
     );
 };
